@@ -21,9 +21,16 @@ defmodule WTChatWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", WTChatWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", WTChatWeb do
+    pipe_through :api
+
+    get "/chats", ChatController, :index
+    post "/chats", ChatController, :create
+    get "/chats/:id", ChatController, :show
+    put "/chats/:id", ChatController, :update
+    delete "/chats/:id", ChatController, :delete
+
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:wt_chat, :dev_routes) do
