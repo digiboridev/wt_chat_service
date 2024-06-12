@@ -8,6 +8,7 @@ defmodule WTChat.Chats.Chat do
     field :creator_id, :string
     field :edited_at, :naive_datetime
     field :deleted_at, :naive_datetime
+    has_many :members, WTChat.Chats.ChatMember
 
     timestamps(type: :utc_datetime)
   end
@@ -16,6 +17,7 @@ defmodule WTChat.Chats.Chat do
   def changeset(chat, attrs) do
     chat
     |> cast(attrs, [:type, :name, :creator_id, :edited_at, :deleted_at])
+    |> cast_assoc(:members, required: true)
     |> validate_required([:type, :creator_id])
   end
 end
