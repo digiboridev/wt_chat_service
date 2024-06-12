@@ -11,7 +11,15 @@ defmodule WTChatWeb.ChatController do
     render(conn, :index, chats: chats)
   end
 
+  @spec create(atom() | %{:body_params => any(), optional(any()) => any()}, any()) :: any()
   def create(conn, %{"chat" => chat_params}) do
+
+    # append joined_at to each member
+    curernt_time = DateTime.utc_now()
+    members = chat_params["members"]
+    |> Enum.map(fn member -> Map.put(member, "joined_at", curernt_time) end)
+    chat_params = Map.put(chat_params, "members", members)
+
     with {:ok, %Chat{} = chat} <- Chats.create_chat(chat_params) do
       conn
       |> put_status(:created)

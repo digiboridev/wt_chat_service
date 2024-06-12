@@ -18,7 +18,7 @@ defmodule WTChat.Chats do
 
   """
   def list_chats do
-    Repo.all(Chat)
+    Repo.all(Chat) |> Repo.preload(:members)
   end
 
   @doc """
@@ -35,7 +35,7 @@ defmodule WTChat.Chats do
       ** (Ecto.NoResultsError)
 
   """
-  def get_chat!(id), do: Repo.get!(Chat, id)
+  def get_chat!(id), do: Repo.get!(Chat, id) |> Repo.preload(:members)
 
   @doc """
   Creates a chat.
@@ -115,6 +115,14 @@ defmodule WTChat.Chats do
   """
   def list_chat_members do
     Repo.all(ChatMember)
+  end
+
+
+  def list_chat_members_by_chat_id(chat_id) do
+    query = from cm in ChatMember,
+      where: cm.chat_id == ^chat_id,
+      select: cm
+    Repo.all(query)
   end
 
   @doc """

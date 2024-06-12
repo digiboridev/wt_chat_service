@@ -16,7 +16,7 @@ defmodule WTChat.Chats.Chat do
   @doc false
   def changeset(chat, attrs) do
     chat
-    |> cast(attrs, [:type, :name, :creator_id, :edited_at, :deleted_at])
+    |> cast(attrs, [:type, :name, :creator_id, :edited_at, :deleted_at,:members])
     |> cast_assoc(:members, required: true)
     |> validate_required([:type, :creator_id])
   end
