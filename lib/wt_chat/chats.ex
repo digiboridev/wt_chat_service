@@ -221,6 +221,13 @@ defmodule WTChat.Chats do
     Repo.all(ChatMessage)
   end
 
+  def list_chat_messages_by_chat_id(chat_id) do
+    query = from cm in ChatMessage,
+      where: cm.chat_id == ^chat_id,
+      select: cm
+    Repo.all(query)
+  end
+
   @doc """
   Gets a single chat_message.
 

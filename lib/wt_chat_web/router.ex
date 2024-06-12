@@ -38,6 +38,11 @@ defmodule WTChatWeb.Router do
     put "/chats/:chat_id/members/:id", ChatMemberController, :update
     delete "/chats/:chat_id/members/:id", ChatMemberController, :delete
 
+    get "/chats/:chat_id/messages", ChatMessageController, :index_by_chat
+    post "/chats/:chat_id/messages", ChatMessageController, :create
+    patch "/chats/:chat_id/messages/:id", ChatMessageController, :edit
+    delete "/chats/:chat_id/messages/:id", ChatMessageController, :soft_delete
+
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

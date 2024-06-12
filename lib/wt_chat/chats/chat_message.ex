@@ -21,7 +21,7 @@ defmodule WTChat.Chats.ChatMessage do
   @doc false
   def changeset(chat_message, attrs) do
     chat_message
-    |> cast(attrs, [:sender_id, :reply_to_id, :author_id, :via_sms, :sms_out_state, :sms_number, :content, :edited_at, :deleted_at])
-    |> validate_required([:sender_id, :content])
+    |> cast(attrs, [:chat_id,:sender_id, :reply_to_id, :author_id, :via_sms, :sms_out_state, :sms_number, :content, :edited_at, :deleted_at])
+    |> validate_required([:sender_id, :content,:chat_id])
   end
 end
