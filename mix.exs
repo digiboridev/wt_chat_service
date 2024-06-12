@@ -19,7 +19,7 @@ defmodule WTChat.MixProject do
   def application do
     [
       mod: {WTChat.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools,:httpoison]
     ]
   end
 
@@ -58,7 +58,8 @@ defmodule WTChat.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
-      {:dotenv, "~> 3.0.0"}
+      {:dotenv, "~> 3.0.0"},
+      {:httpoison, "~> 2.0"}
     ]
   end
 

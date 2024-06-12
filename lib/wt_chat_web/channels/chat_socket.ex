@@ -38,14 +38,15 @@ defmodule WTChatWeb.ChatSocket do
   @impl true
   def connect(params, socket, _connect_info) do
     token = params |> Map.get("token")
-    case token do
-      "123123" ->
-        {:ok, assign(socket, :user_id, "123user")}
+    tenant_id = params |> Map.get("tenant_id")
+
+    user_id_response = parse_token(token, tenant_id)
+    case user_id_response do
+      {:ok, user_id} ->
+        {:ok, assign(socket, :user_id, user_id)}
       _ ->
         :error
     end
-
-    # {:ok, socket}
   end
 
   # Socket IDs are topics that allow you to identify all sockets for a given user:
@@ -60,4 +61,20 @@ defmodule WTChatWeb.ChatSocket do
   # Returning `nil` makes this socket anonymous.
   @impl true
   def id(_socket), do: nil
+
+  defp parse_token(token, tenant_id) do
+    uri = "#{System.get_env("CORE_URI")}/tenant/#{tenant_id}/api/v1/user"
+    headers = [Authorization: "Bearer #{token}", Accept: "Application/json; Charset=utf-8"]
+
+    response = HTTPoison.get(uri, headers)
+    case response do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        json = Jason.decode!(body)
+        main_number = json["numbers"]["main"]
+        {:ok, main_number}
+      _ ->
+        :error
+    end
+  end
+
 end
