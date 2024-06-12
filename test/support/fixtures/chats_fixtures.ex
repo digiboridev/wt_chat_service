@@ -40,4 +40,26 @@ defmodule WTChat.ChatsFixtures do
 
     chat_member
   end
+
+  @doc """
+  Generate a chat_message.
+  """
+  def chat_message_fixture(attrs \\ %{}) do
+    {:ok, chat_message} =
+      attrs
+      |> Enum.into(%{
+        author_id: "some author_id",
+        content: "some content",
+        deleted_at: ~N[2024-06-11 11:46:00],
+        edited_at: ~N[2024-06-11 11:46:00],
+        reply_to_id: "some reply_to_id",
+        sender_id: "some sender_id",
+        sms_number: "some sms_number",
+        sms_out_state: :sending,
+        via_sms: true
+      })
+      |> WTChat.Chats.create_chat_message()
+
+    chat_message
+  end
 end
