@@ -8,6 +8,10 @@ defmodule WTChatWeb.ChatMemberJSON do
     %{data: for(chat_member <- chat_members, do: data(chat_member))}
   end
 
+  def indexFlat(%{chat_members: chat_members}) do
+    for(chat_member <- chat_members, do: data(chat_member))
+  end
+
   @doc """
   Renders a single chat_member.
   """
@@ -18,6 +22,7 @@ defmodule WTChatWeb.ChatMemberJSON do
   defp data(%ChatMember{} = chat_member) do
     %{
       id: chat_member.id,
+      chat_id: chat_member.chat_id,
       user_id: chat_member.user_id,
       joined_at: chat_member.joined_at,
       left_at: chat_member.left_at,

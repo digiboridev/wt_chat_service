@@ -15,6 +15,7 @@ defmodule WTChatWeb.ChatJSON do
     %{data: data(chat)}
   end
 
+
   defp data(%Chat{} = chat) do
     %{
       id: chat.id,
@@ -24,7 +25,7 @@ defmodule WTChatWeb.ChatJSON do
       created_at: chat.inserted_at,
       updated_at: chat.updated_at,
       deleted_at: chat.deleted_at,
-      members: WTChatWeb.ChatMemberJSON.index(%{chat_members: chat.members})
+      members: WTChatWeb.ChatMemberJSON.indexFlat(%{chat_members: chat.members})
     }
   end
 end
