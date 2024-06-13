@@ -19,15 +19,17 @@ defmodule WTChatWeb.ChatMessageJSON do
     %{
       id: chat_message.id,
       sender_id: chat_message.sender_id,
+      chat_id: chat_message.chat_id,
       reply_to_id: chat_message.reply_to_id,
+      forwarded_from_id: chat_message.forwarded_from_id,
       author_id: chat_message.author_id,
       via_sms: chat_message.via_sms,
       sms_out_state: chat_message.sms_out_state,
       sms_number: chat_message.sms_number,
       content: chat_message.content,
+      edited_at: chat_message.edited_at,
       created_at: chat_message.inserted_at,
       updated_at: chat_message.updated_at,
-      edited_at: chat_message.edited_at,
       deleted_at: chat_message.deleted_at
     }
   end

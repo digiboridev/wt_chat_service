@@ -3,13 +3,12 @@ defmodule WTChat.Chats.ChatMember do
   import Ecto.Changeset
 
   schema "chat_members" do
-    field :user_id, :string
-    field :joined_at, :naive_datetime
-    field :left_at, :naive_datetime
-    field :blocked_at, :naive_datetime
     field :chat_id, :id
-
-    timestamps(type: :utc_datetime)
+    field :user_id, :string
+    field :joined_at, :utc_datetime_usec
+    field :left_at, :utc_datetime_usec
+    field :blocked_at, :utc_datetime_usec
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false

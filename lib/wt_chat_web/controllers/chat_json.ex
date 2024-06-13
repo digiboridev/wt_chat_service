@@ -21,7 +21,8 @@ defmodule WTChatWeb.ChatJSON do
       type: chat.type,
       name: chat.name,
       creator_id: chat.creator_id,
-      edited_at: chat.edited_at,
+      created_at: chat.inserted_at,
+      updated_at: chat.updated_at,
       deleted_at: chat.deleted_at,
       members: WTChatWeb.ChatMemberJSON.index(%{chat_members: chat.members})
     }

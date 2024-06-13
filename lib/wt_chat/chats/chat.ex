@@ -6,17 +6,15 @@ defmodule WTChat.Chats.Chat do
     field :name, :string
     field :type, Ecto.Enum, values: [:dialog, :group]
     field :creator_id, :string
-    field :edited_at, :naive_datetime
-    field :deleted_at, :naive_datetime
+    field :deleted_at, :utc_datetime_usec
     has_many :members, WTChat.Chats.ChatMember
-
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false
   def changeset(chat, attrs) do
     chat
-    |> cast(attrs, [:type, :name, :creator_id, :edited_at, :deleted_at,:members])
+    |> cast(attrs, [:type, :name, :creator_id, :deleted_at])
     |> cast_assoc(:members, required: true)
     |> validate_required([:type, :creator_id])
   end

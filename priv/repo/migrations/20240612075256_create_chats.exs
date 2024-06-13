@@ -3,13 +3,11 @@ defmodule WTChat.Repo.Migrations.CreateChats do
 
   def change do
     create table(:chats) do
-      add :type, :string, null: false
       add :name, :string
+      add :type, :string, null: false
       add :creator_id, :string, null: false
-      add :edited_at, :naive_datetime
-      add :deleted_at, :naive_datetime
-
-      timestamps(type: :utc_datetime)
+      add :deleted_at, :utc_datetime_usec
+      timestamps(type: :utc_datetime_usec)
     end
   end
 end

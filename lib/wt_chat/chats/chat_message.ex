@@ -4,18 +4,17 @@ defmodule WTChat.Chats.ChatMessage do
 
   schema "chat_messages" do
     field :sender_id, :string
+    field :chat_id, :id
     field :reply_to_id, :string
+    field :forwarded_from_id, :id
     field :author_id, :string
     field :via_sms, :boolean, default: false
     field :sms_out_state, Ecto.Enum, values: [:sending, :error, :delivered]
     field :sms_number, :string
     field :content, :string
-    field :edited_at, :naive_datetime
-    field :deleted_at, :naive_datetime
-    field :chat_id, :id
-    field :forwarded_from_id, :id
-
-    timestamps(type: :utc_datetime)
+    field :edited_at, :utc_datetime_usec
+    field :deleted_at, :utc_datetime_usec
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false

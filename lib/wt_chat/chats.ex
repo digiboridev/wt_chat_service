@@ -7,6 +7,8 @@ defmodule WTChat.Chats do
   alias WTChat.Repo
 
   alias WTChat.Chats.Chat
+  alias WTChat.Chats.ChatMember
+  alias WTChat.Chats.ChatMessage
 
   @doc """
   Returns the list of chats.
@@ -19,6 +21,25 @@ defmodule WTChat.Chats do
   """
   def list_chats do
     Repo.all(Chat) |> Repo.preload(:members)
+  end
+
+
+  def list_chats(member_id) do
+    query = from c in Chat,
+      join: cm in ChatMember,
+      on: c.id == cm.chat_id,
+      where: cm.user_id == ^member_id,
+      select: c
+    Repo.all(query) |> Repo.preload(:members)
+  end
+
+  def list_chats(member_id,updated_at) do
+    query = from c in Chat,
+      join: cm in ChatMember,
+      on: c.id == cm.chat_id,
+      where: cm.user_id == ^member_id and c.updated_at > ^updated_at,
+      select: c
+    Repo.all(query) |> Repo.preload(:members)
   end
 
   @doc """
@@ -102,7 +123,6 @@ defmodule WTChat.Chats do
     Chat.changeset(chat, attrs)
   end
 
-  alias WTChat.Chats.ChatMember
 
   @doc """
   Returns the list of chat_members.
