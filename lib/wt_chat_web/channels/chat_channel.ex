@@ -45,7 +45,7 @@ defmodule WTChatWeb.ChatChannel do
   end
 
   def handle_in("chat_create", payload, socket) do
-    chat = WtChatWeb.ChatService.create(payload)
+    chat = WTChat.ChatService.create(payload)
 
     case chat do
       {:ok, chat} ->
