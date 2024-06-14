@@ -3,7 +3,14 @@ defmodule WTChatWeb.ChatChannel do
 
   alias WTChat.Chats
   alias WTChat.Chats.Chat
+
   alias WTChatWeb.ChatJSON
+  # alias WTChatWeb.ChatMemberJSON
+  alias WTChatWeb.ChatMessageJSON
+
+  alias WTChat.ChatService
+  # alias WTChat.ChatMemberService
+  alias WTChat.ChatMessageService
 
   # Service channel that needs to reply user with the user_id that verified in the connect function
   def join("chat:auth", _message, socket) do
@@ -24,6 +31,7 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
+  # User event for syncing the chat list fully or since a specific time
   def handle_in("chat_list_get", payload, socket) do
     user_id = socket.assigns.user_id
     since = payload["since"]
@@ -44,8 +52,9 @@ defmodule WTChatWeb.ChatChannel do
     {:reply, {:ok, json}, socket}
   end
 
-  def handle_in("chat_create", payload, socket) do
-    chat = WTChat.ChatService.create(payload)
+  # User event for creating a new chat
+  def handle_in("chat_create_raw", payload, socket) do
+    chat = ChatService.create(payload)
 
     case chat do
       {:ok, chat} ->
@@ -55,6 +64,39 @@ defmodule WTChatWeb.ChatChannel do
       {:error, reason} ->
         {:reply, {:error, reason}, socket}
     end
+  end
+
+  # Simplified user event for creating dialog with another user and sending the first message
+  def handle_in("new_dialog", payload, socket) do
+    user_id = socket.assigns.user_id
+    participant = payload["participant"]
+    first_message = payload["first_message"]
+
+    # TODO atomic transaction
+
+    chat_params = %{
+      "type" => "dialog",
+      "creator_id" => user_id,
+      "members" => [
+        %{"user_id" => user_id},
+        %{"user_id" => participant}
+      ]
+    }
+
+    chat = ChatService.create(%{"chat" => chat_params})
+
+    msg_params = %{
+      "chat_id" => chat.id,
+      "sender_id" => user_id,
+      "content" => first_message
+    }
+
+    msg = ChatMessageService.create(msg_params)
+
+    chat_json = %{chat: chat} |> ChatJSON.showFlat()
+    msg_json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
+    reply_json = %{chat: chat_json, message: msg_json}
+    {:reply, {:ok, reply_json}, socket}
   end
 
   def handle_in(event, _payload, socket) do
