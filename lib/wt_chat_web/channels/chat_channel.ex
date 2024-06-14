@@ -2,6 +2,7 @@ defmodule WTChatWeb.ChatChannel do
   use Phoenix.Channel
 
   alias WTChat.Chats
+  alias WTChat.Chats.Chat
   alias WTChatWeb.ChatJSON
 
   # Service channel that needs to reply user with the user_id that verified in the connect function
@@ -43,8 +44,32 @@ defmodule WTChatWeb.ChatChannel do
     {:reply, {:ok, json}, socket}
   end
 
+  def handle_in("chat_create", payload, socket) do
+    chat = WtChatWeb.ChatService.create(payload)
+
+    case chat do
+      {:ok, chat} ->
+        json = %{chat: chat} |> ChatJSON.showFlat()
+        {:reply, {:ok, json}, socket}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, socket}
+    end
+  end
+
   def handle_in(event, _payload, socket) do
     IO.puts(event)
+    {:noreply, socket}
+  end
+
+  def handle_info({:chat_update, %Chat{} = data}, socket) do
+    json = %{chat: data} |> ChatJSON.showFlat()
+    push(socket, "chat_update", json)
+    {:noreply, socket}
+  end
+
+  def handle_info(msg, socket) do
+    IO.inspect(msg)
     {:noreply, socket}
   end
 end
