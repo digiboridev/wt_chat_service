@@ -19,6 +19,10 @@ defmodule WTChatWeb.ChatMemberJSON do
     %{data: data(chat_member)}
   end
 
+  def showFlat(%{chat_member: chat_member}) do
+    data(chat_member)
+  end
+
   defp data(%ChatMember{} = chat_member) do
     %{
       id: chat_member.id,

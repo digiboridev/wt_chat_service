@@ -8,11 +8,19 @@ defmodule WTChatWeb.ChatMessageJSON do
     %{data: for(chat_message <- chat_messages, do: data(chat_message))}
   end
 
+  def indexFlat(%{chat_messages: chat_messages}) do
+    for(chat_message <- chat_messages, do: data(chat_message))
+  end
+
   @doc """
   Renders a single chat_message.
   """
   def show(%{chat_message: chat_message}) do
     %{data: data(chat_message)}
+  end
+
+  def showFlat(%{chat_message: chat_message}) do
+    data(chat_message)
   end
 
   defp data(%ChatMessage{} = chat_message) do

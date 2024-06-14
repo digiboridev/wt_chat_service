@@ -8,11 +8,19 @@ defmodule WTChatWeb.ChatJSON do
     %{data: for(chat <- chats, do: data(chat))}
   end
 
+  def indexFlat(%{chats: chats}) do
+    for(chat <- chats, do: data(chat))
+  end
+
   @doc """
   Renders a single chat.
   """
   def show(%{chat: chat}) do
     %{data: data(chat)}
+  end
+
+  def showFlat(%{chat: chat}) do
+    data(chat)
   end
 
 
