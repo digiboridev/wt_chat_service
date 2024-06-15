@@ -14,7 +14,7 @@ defmodule WTChat.Chats.ChatMember do
   @doc false
   def changeset(chat_member, attrs) do
     chat_member
-    |> cast(attrs, [:user_id, :joined_at, :left_at, :blocked_at])
+    |> cast(attrs, [:chat_id, :user_id, :joined_at, :left_at, :blocked_at])
     |> validate_required([:user_id, :joined_at])
   end
 end

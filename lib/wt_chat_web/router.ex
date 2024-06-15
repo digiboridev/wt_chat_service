@@ -27,10 +27,13 @@ defmodule WTChatWeb.Router do
     get "/chats", ChatController, :index
     post "/chats", ChatController, :create
     get "/chats/:id", ChatController, :show
-    put "/chats/:id", ChatController, :update
+    patch "/chats/:id", ChatController, :update
     delete "/chats/:id", ChatController, :soft_delete
+    post "/chats/:id/leave", ChatController, :leave_chat
+    post "/chats/:id/member_add", ChatController, :add_member
+    post "/chats/:id/member_block", ChatController, :block_member
 
-    get "/chats/:chat_id/members", ChatMemberController, :index_by_chat
+
 
     get "/chats/:chat_id/messages", ChatMessageController, :index_by_chat
     post "/chats/:chat_id/messages", ChatMessageController, :create

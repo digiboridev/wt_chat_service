@@ -1,8 +1,7 @@
-
 defmodule WTChat.ChatService do
+  # alias WTChat.Chats.ChatMember
   alias WTChat.Chats
   alias WTChat.Chats.Chat
-
 
   def index(params) do
     member_filter = Map.get(params, "member_id")
@@ -15,7 +14,7 @@ defmodule WTChat.ChatService do
     end
   end
 
-  def create(%{"chat" => chat_params}) do
+  def create(chat_params) do
     # append joined_at to each member
     chat_params =
       Map.put(chat_params, "members", append_members_join_date(chat_params["members"]))
@@ -26,18 +25,14 @@ defmodule WTChat.ChatService do
     end
   end
 
-  def show(%{"id" => id}) do
-    with chat <- Chats.get_chat!(id) do
+  def show(chat_id) do
+    with chat <- Chats.get_chat!(chat_id) do
       {:ok, chat}
     end
   end
 
-  def update(%{"id" => id, "chat" => chat_params}) do
-    chat = Chats.get_chat!(id)
-
-    # append joined_at to each new member
-    chat_params =
-      Map.put(chat_params, "members", append_members_join_date(chat_params["members"]))
+  def update(chat_id, chat_params) do
+    chat = Chats.get_chat!(chat_id)
 
     with {:ok, %Chat{} = chat} <- Chats.update_chat(chat, chat_params) do
       publish_chat_update(chat)
@@ -45,18 +40,54 @@ defmodule WTChat.ChatService do
     end
   end
 
-  def soft_delete(%{"id" => id}) do
-    chat = Chats.get_chat!(id)
-    chat_params = %{"deleted_at" => NaiveDateTime.utc_now()}
+  def add_member(chat_id, member_id) do
+    chat = Chats.get_chat!(chat_id)
 
-    with {:ok, %Chat{} = chat} <- Chats.update_chat(chat, chat_params) do
+    member_params = %{joined_at: DateTime.utc_now(), chat_id: chat_id, user_id: member_id}
+    chat_changes = %{updated_at: DateTime.utc_now()}
+
+    with {:ok, %Chat{} = chat} <- Chats.add_chat_member(chat, chat_changes, member_params) do
       publish_chat_update(chat)
       {:ok, chat}
     end
   end
 
-  def delete(%{"id" => id}) do
-    chat = Chats.get_chat!(id)
+  def leave_chat(chat_id, member_id) do
+    chat = Chats.get_chat!(chat_id)
+
+    member_changes = %{left_at: DateTime.utc_now()}
+    chat_changes = %{updated_at: DateTime.utc_now()}
+
+    with {:ok, %Chat{} = chat} <- Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
+      publish_chat_update(chat)
+      {:ok, chat}
+    end
+  end
+
+  def block_member(chat_id, member_id) do
+    chat = Chats.get_chat!(chat_id)
+
+    member_changes = %{blocked_at: DateTime.utc_now()}
+    chat_changes = %{updated_at: DateTime.utc_now()}
+
+    with {:ok, %Chat{} = chat} <- Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
+      publish_chat_update(chat)
+      {:ok, chat}
+    end
+  end
+
+  def soft_delete(chat_id) do
+    chat = Chats.get_chat!(chat_id)
+    chat_changes = %{"deleted_at" => DateTime.utc_now()}
+
+    with {:ok, %Chat{} = chat} <- Chats.update_chat(chat, chat_changes) do
+      publish_chat_update(chat)
+      {:ok, chat}
+    end
+  end
+
+  def delete(chat_id) do
+    chat = Chats.get_chat!(chat_id)
 
     with {:ok, %Chat{}} <- Chats.delete_chat(chat) do
       {:ok, chat}

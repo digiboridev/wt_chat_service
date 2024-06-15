@@ -23,22 +23,25 @@ defmodule WTChat.Chats do
     Repo.all(Chat) |> Repo.preload(:members)
   end
 
-
   def list_chats(member_id) do
-    query = from c in Chat,
-      join: cm in ChatMember,
-      on: c.id == cm.chat_id,
-      where: cm.user_id == ^member_id,
-      select: c
+    query =
+      from c in Chat,
+        join: cm in ChatMember,
+        on: c.id == cm.chat_id,
+        where: cm.user_id == ^member_id,
+        select: c
+
     Repo.all(query) |> Repo.preload(:members)
   end
 
-  def list_chats(member_id,updated_at) do
-    query = from c in Chat,
-      join: cm in ChatMember,
-      on: c.id == cm.chat_id,
-      where: cm.user_id == ^member_id and c.updated_at > ^updated_at,
-      select: c
+  def list_chats(member_id, updated_at) do
+    query =
+      from c in Chat,
+        join: cm in ChatMember,
+        on: c.id == cm.chat_id,
+        where: cm.user_id == ^member_id and c.updated_at > ^updated_at,
+        select: c
+
     Repo.all(query) |> Repo.preload(:members)
   end
 
@@ -123,7 +126,6 @@ defmodule WTChat.Chats do
     Chat.changeset(chat, attrs)
   end
 
-
   @doc """
   Returns the list of chat_members.
 
@@ -137,12 +139,34 @@ defmodule WTChat.Chats do
     Repo.all(ChatMember)
   end
 
-
   def list_chat_members_by_chat_id(chat_id) do
-    query = from cm in ChatMember,
-      where: cm.chat_id == ^chat_id,
-      select: cm
+    query =
+      from cm in ChatMember,
+        where: cm.chat_id == ^chat_id,
+        select: cm
+
     Repo.all(query)
+  end
+
+  def add_chat_member(chat, chat_changes, member_params) do
+    members_changeset = [member_params | chat.members]
+
+    chat
+    |> Ecto.Changeset.change(chat_changes)
+    |> Ecto.Changeset.put_assoc(:members, members_changeset)
+    |> Repo.update()
+  end
+
+  def update_chat_with_member(chat, chat_changes, member_id, member_changes) do
+    members_changeset =
+      Enum.map(chat.members, fn member ->
+        if member.user_id == member_id, do: Map.merge(%{:id => member.id}, member_changes), else: %{:id => member.id}
+      end)
+
+    chat
+    |> Ecto.Changeset.change(chat_changes)
+    |> Ecto.Changeset.put_assoc(:members, members_changeset)
+    |> Repo.update()
   end
 
   @doc """
@@ -242,9 +266,11 @@ defmodule WTChat.Chats do
   end
 
   def list_chat_messages_by_chat_id(chat_id) do
-    query = from cm in ChatMessage,
-      where: cm.chat_id == ^chat_id,
-      select: cm
+    query =
+      from cm in ChatMessage,
+        where: cm.chat_id == ^chat_id,
+        select: cm
+
     Repo.all(query)
   end
 

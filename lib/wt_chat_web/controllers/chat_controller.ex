@@ -11,21 +11,38 @@ defmodule WTChatWeb.ChatController do
   end
 
   def create(conn, %{"chat" => chat_params}) do
-    case ChatService.create(%{"chat" => chat_params}) do
-      {:ok, chat} -> render(conn, :show, chat: chat)
-      {:error, reason} -> render(conn, :error, reason: reason)
+    with {:ok, chat} <- ChatService.create(chat_params) do
+      render(conn, :show, chat: chat)
     end
   end
 
-  def show(conn, %{"id" => id}) do
-    chat = ChatService.show(%{"id" => id})
-    render(conn, :show, chat: chat)
+  def show(conn, %{"id" => chat_id}) do
+    with {:ok, chat} <- ChatService.show(chat_id) do
+      render(conn, :show, chat: chat)
+    end
   end
 
-  def update(conn, %{"id" => id, "chat" => chat_params}) do
-    case ChatService.update(%{"id" => id, "chat" => chat_params}) do
-      {:ok, chat} -> render(conn, :show, chat: chat)
-      {:error, reason} -> render(conn, :error, reason: reason)
+  def update(conn, %{"id" => chat_id, "chat" => chat_params}) do
+    with {:ok, chat} <- ChatService.update(chat_id, chat_params) do
+      render(conn, :show, chat: chat)
+    end
+  end
+
+  def add_member(conn, %{"id" => chat_id, "member_id" => member_id}) do
+    with {:ok, chat} <- ChatService.add_member(chat_id, member_id) do
+      render(conn, :show, chat: chat)
+    end
+  end
+
+  def leave_chat(conn, %{"id" => chat_id, "member_id" => member_id}) do
+    with {:ok, chat} <- ChatService.leave_chat(chat_id, member_id) do
+      render(conn, :show, chat: chat)
+    end
+  end
+
+  def block_member(conn, %{"id" => chat_id, "member_id" => member_id}) do
+    with {:ok, chat} <- ChatService.block_member(chat_id, member_id) do
+      render(conn, :show, chat: chat)
     end
   end
 
