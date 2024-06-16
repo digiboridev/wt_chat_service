@@ -3,6 +3,7 @@ defmodule WTChatWeb.ChatChannel do
 
   alias WTChat.Chats
   alias WTChat.Chats.Chat
+  alias WTChat.Chats.ChatMessage
 
   alias WTChatWeb.ChatJSON
   # alias WTChatWeb.ChatMemberJSON
@@ -29,6 +30,25 @@ defmodule WTChatWeb.ChatChannel do
       true ->
         {:error, %{reason: "trying to join a chat that is not yours"}}
     end
+  end
+
+ # Channel for events that related to the specific chat
+  def join("chat:chatroom:" <> chat_id, _, socket ) do
+      IO.puts("chatroom join")
+      IO.puts("chat_id: #{chat_id}")
+      {:ok,socket}
+  end
+
+  # Fall back channel for chat-less dialog
+  # Uses only for wait on first message with newly created chat id for reconnect to the chatroom
+  def join("chat:dialog:" <> users, _params, socket) do
+    # TODO: find dialog on join
+    from_user = hd(String.split(users, ","))
+    to_user = hd(tl(String.split(users, ",")))
+    IO.puts("dialog join")
+    IO.puts("from_user: #{from_user}")
+    IO.puts("to_user: #{to_user}")
+    {:ok,socket}
   end
 
   # User event for syncing the chat list fully or since a specific time
@@ -66,37 +86,22 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  # Simplified user event for creating dialog with another user and sending the first message
-  def handle_in("new_dialog", payload, socket) do
+  def handle_in("new_msg", payload, socket) do
     user_id = socket.assigns.user_id
-    participant = payload["participant"]
-    first_message = payload["first_message"]
 
-    # TODO atomic transaction
+    chat_id = payload["chat_id"]
+    content = payload["content"]
+    id_key = payload["id_key"]
 
-    chat_params = %{
-      "type" => "dialog",
-      "creator_id" => user_id,
-      "members" => [
-        %{"user_id" => user_id},
-        %{"user_id" => participant}
-      ]
-    }
+    case ChatMessageService.new_message(chat_id, content, user_id, id_key) do
+      {:ok, msg} ->
+        json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
+        {:reply, {:ok, json}, socket}
 
-    chat = ChatService.create(%{"chat" => chat_params})
+      {:error, reason} ->
+        {:reply, {:error, reason}, socket}
+    end
 
-    msg_params = %{
-      "chat_id" => chat.id,
-      "sender_id" => user_id,
-      "content" => first_message
-    }
-
-    msg = ChatMessageService.create(msg_params)
-
-    chat_json = %{chat: chat} |> ChatJSON.showFlat()
-    msg_json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
-    reply_json = %{chat: chat_json, message: msg_json}
-    {:reply, {:ok, reply_json}, socket}
   end
 
   def handle_in(event, _payload, socket) do
@@ -107,6 +112,12 @@ defmodule WTChatWeb.ChatChannel do
   def handle_info({:chat_update, %Chat{} = data}, socket) do
     json = %{chat: data} |> ChatJSON.showFlat()
     push(socket, "chat_update", json)
+    {:noreply, socket}
+  end
+
+  def handle_info({:msg_update, %ChatMessage{} = message}, socket) do
+    json = %{chat_message: message} |> ChatMessageJSON.showFlat()
+    push(socket, "message_update", json)
     {:noreply, socket}
   end
 

@@ -12,6 +12,8 @@ defmodule WTChat.Repo.Migrations.CreateChatMessages do
       add :sms_out_state, :string
       add :sms_number, :string
       add :content, :text, null: false
+      add :idempotency_key, :string, null: false
+      add :created_at, :utc_datetime_usec, null: false
       add :edited_at, :utc_datetime_usec
       add :deleted_at, :utc_datetime_usec
       timestamps(type: :utc_datetime_usec)
@@ -21,5 +23,6 @@ defmodule WTChat.Repo.Migrations.CreateChatMessages do
     create index(:chat_messages, [:forwarded_from_id])
     create index(:chat_messages, [:inserted_at])
     create index(:chat_messages, [:updated_at])
+    create unique_index(:chat_messages, [:idempotency_key])
   end
 end

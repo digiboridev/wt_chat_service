@@ -12,15 +12,33 @@ defmodule WTChat.Chats.ChatMessage do
     field :sms_out_state, Ecto.Enum, values: [:sending, :error, :delivered]
     field :sms_number, :string
     field :content, :string
+    field :idempotency_key, :string
+    field :created_at, :utc_datetime_usec
     field :edited_at, :utc_datetime_usec
     field :deleted_at, :utc_datetime_usec
+    belongs_to :chat, WTChat.Chats.Chat, define_field: false, on_replace: :update
     timestamps(type: :utc_datetime_usec)
   end
 
   @doc false
   def changeset(chat_message, attrs) do
     chat_message
-    |> cast(attrs, [:chat_id,:sender_id, :reply_to_id, :author_id, :via_sms, :sms_out_state, :sms_number, :content, :edited_at, :deleted_at])
-    |> validate_required([:sender_id, :content,:chat_id])
+    |> cast(attrs, [
+      :chat_id,
+      :sender_id,
+      :reply_to_id,
+      :author_id,
+      :via_sms,
+      :sms_out_state,
+      :sms_number,
+      :content,
+      :idempotency_key,
+      :created_at,
+      :edited_at,
+      :deleted_at
+    ])
+    |> cast_assoc(:chat)
+    |> validate_required([:sender_id, :content, :created_at])
   end
+
 end

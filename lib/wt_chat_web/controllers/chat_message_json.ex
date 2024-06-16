@@ -35,8 +35,9 @@ defmodule WTChatWeb.ChatMessageJSON do
       sms_out_state: chat_message.sms_out_state,
       sms_number: chat_message.sms_number,
       content: chat_message.content,
+      idempotency_key: chat_message.idempotency_key,
       edited_at: chat_message.edited_at,
-      created_at: chat_message.inserted_at,
+      created_at: chat_message.created_at,
       updated_at: chat_message.updated_at,
       deleted_at: chat_message.deleted_at
     }

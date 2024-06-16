@@ -6,16 +6,31 @@ defmodule WTChatWeb.ChatMessageController do
 
   action_fallback WTChatWeb.FallbackController
 
-  def index_by_chat(conn, %{"chat_id" => chat_id}) do
-    chat_messages = ChatMessageService.index_by_chat_id(chat_id)
+  def message_history(conn, params) do
+    chat_messages = ChatMessageService.message_history(params)
     render(conn, :index, chat_messages: chat_messages)
   end
 
-  def create(conn, %{"chat_id" => chat_id, "chat_message" => params}) do
-    chat_id_number = String.to_integer(chat_id)
-    params = Map.put(params, "chat_id", chat_id_number)
+  def message_updates(conn, params) do
+    chat_messages = ChatMessageService.message_updates(params)
+    render(conn, :index, chat_messages: chat_messages)
+  end
 
-    with {:ok, %ChatMessage{} = chat_message} <- ChatMessageService.create(params) do
+  def create(conn, %{
+        "chat_id" => chat_id,
+        "content" => content,
+        "sender_id" => sender_id,
+        "idempotency_key" => id_key
+      }) do
+    chat_id_number = String.to_integer(chat_id)
+
+    with {:ok, %ChatMessage{} = chat_message} <-
+           ChatMessageService.new_message(
+             chat_id_number,
+             content,
+             sender_id,
+             id_key
+           ) do
       conn
       |> put_status(:created)
       |> render(:show, chat_message: chat_message)

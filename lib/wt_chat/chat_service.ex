@@ -26,7 +26,7 @@ defmodule WTChat.ChatService do
   end
 
   def show(chat_id) do
-    with chat <- Chats.get_chat!(chat_id) do
+    with chat <- Chats.get_chat_with_members!(chat_id) do
       {:ok, chat}
     end
   end
@@ -41,7 +41,7 @@ defmodule WTChat.ChatService do
   end
 
   def add_member(chat_id, member_id) do
-    chat = Chats.get_chat!(chat_id)
+    chat = Chats.get_chat_with_members!(chat_id)
 
     member_params = %{joined_at: DateTime.utc_now(), chat_id: chat_id, user_id: member_id}
     chat_changes = %{updated_at: DateTime.utc_now()}
@@ -53,26 +53,36 @@ defmodule WTChat.ChatService do
   end
 
   def leave_chat(chat_id, member_id) do
-    chat = Chats.get_chat!(chat_id)
+    chat = Chats.get_chat_with_members!(chat_id)
 
     member_changes = %{left_at: DateTime.utc_now()}
     chat_changes = %{updated_at: DateTime.utc_now()}
 
-    with {:ok, %Chat{} = chat} <- Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
+    with {:ok, %Chat{} = chat} <-
+           Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
       publish_chat_update(chat)
       {:ok, chat}
     end
   end
 
   def block_member(chat_id, member_id) do
-    chat = Chats.get_chat!(chat_id)
+    chat = Chats.get_chat_with_members!(chat_id)
 
     member_changes = %{blocked_at: DateTime.utc_now()}
     chat_changes = %{updated_at: DateTime.utc_now()}
 
-    with {:ok, %Chat{} = chat} <- Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
+    with {:ok, %Chat{} = chat} <-
+           Chats.update_chat_with_member(chat, chat_changes, member_id, member_changes) do
       publish_chat_update(chat)
       {:ok, chat}
+    end
+  end
+
+  def find_dialog(from_user, to_user) do
+    result = Chats.find_dialog(from_user, to_user)
+    case result do
+      %Chat{} -> {:ok, result}
+      nil -> nil
     end
   end
 

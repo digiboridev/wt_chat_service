@@ -59,4 +59,11 @@ defmodule WTChatWeb.ChatController do
       {:error, reason} -> render(conn, :error, reason: reason)
     end
   end
+
+  def find_dialog(conn, %{"from_user" => from_user, "to_user" => to_user}) do
+    case ChatService.find_dialog(from_user, to_user) do
+      {:ok, chat} -> render(conn, :show, chat: chat)
+      nil -> json(conn, %{error: "Dialog not found"})
+    end
+  end
 end

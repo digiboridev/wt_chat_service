@@ -26,6 +26,7 @@ defmodule WTChatWeb.Router do
 
     get "/chats", ChatController, :index
     post "/chats", ChatController, :create
+    get "/chats/find_dialog", ChatController, :find_dialog
     get "/chats/:id", ChatController, :show
     patch "/chats/:id", ChatController, :update
     delete "/chats/:id", ChatController, :soft_delete
@@ -33,9 +34,8 @@ defmodule WTChatWeb.Router do
     post "/chats/:id/member_add", ChatController, :add_member
     post "/chats/:id/member_block", ChatController, :block_member
 
-
-
-    get "/chats/:chat_id/messages", ChatMessageController, :index_by_chat
+    get "/chats/:chat_id/message_history", ChatMessageController, :message_history
+    get "/chats/:chat_id/message_updates", ChatMessageController, :message_updates
     post "/chats/:chat_id/messages", ChatMessageController, :create
     patch "/chats/:chat_id/messages/:id", ChatMessageController, :edit
     delete "/chats/:chat_id/messages/:id", ChatMessageController, :soft_delete

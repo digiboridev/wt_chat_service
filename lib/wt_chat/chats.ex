@@ -59,7 +59,24 @@ defmodule WTChat.Chats do
       ** (Ecto.NoResultsError)
 
   """
-  def get_chat!(id), do: Repo.get!(Chat, id) |> Repo.preload(:members)
+  def get_chat!(id), do: Repo.get!(Chat, id)
+
+  def get_chat_with_members!(id), do: Repo.get!(Chat, id) |> Repo.preload(:members)
+
+  def find_dialog(user1, user2) do
+    query =
+      from c in Chat,
+        join: cm1 in ChatMember,
+        on: c.id == cm1.chat_id,
+        join: cm2 in ChatMember,
+        on: c.id == cm2.chat_id,
+        where: c.type == :dialog,
+        where: cm1.user_id == ^user1,
+        where: cm2.user_id == ^user2,
+        select: c
+
+    Repo.one(query) |> Repo.preload(:members)
+  end
 
   @doc """
   Creates a chat.
@@ -160,7 +177,9 @@ defmodule WTChat.Chats do
   def update_chat_with_member(chat, chat_changes, member_id, member_changes) do
     members_changeset =
       Enum.map(chat.members, fn member ->
-        if member.user_id == member_id, do: Map.merge(%{:id => member.id}, member_changes), else: %{:id => member.id}
+        if member.user_id == member_id,
+          do: Map.merge(%{:id => member.id}, member_changes),
+          else: %{:id => member.id}
       end)
 
     chat
@@ -261,14 +280,56 @@ defmodule WTChat.Chats do
       [%ChatMessage{}, ...]
 
   """
-  def list_chat_messages do
+  def message_history do
     Repo.all(ChatMessage)
   end
 
-  def list_chat_messages_by_chat_id(chat_id) do
+  def message_history(chat_id) do
     query =
       from cm in ChatMessage,
         where: cm.chat_id == ^chat_id,
+        select: cm
+
+    Repo.all(query)
+  end
+
+  def message_history(chat_id, limit) do
+    query =
+      from cm in ChatMessage,
+        where: cm.chat_id == ^chat_id,
+        order_by: [desc: cm.created_at],
+        limit: ^limit,
+        select: cm
+
+    Repo.all(query)
+  end
+
+  def message_history(chat_id, from , limit) do
+    query =
+      from cm in ChatMessage,
+        where: cm.chat_id == ^chat_id and cm.created_at < ^from,
+        order_by: [desc: cm.created_at],
+        limit: ^limit,
+        select: cm
+
+    Repo.all(query)
+  end
+
+  def message_updates(from, limit) do
+    query =
+      from cm in ChatMessage,
+        where: cm.updated_at > ^from,
+        limit: ^limit,
+        select: cm
+
+    Repo.all(query)
+  end
+
+  def message_updates(from,limit,chat_id) do
+    query =
+      from cm in ChatMessage,
+        where: cm.chat_id == ^chat_id and cm.updated_at > ^from,
+        limit: ^limit,
         select: cm
 
     Repo.all(query)
@@ -288,7 +349,9 @@ defmodule WTChat.Chats do
       ** (Ecto.NoResultsError)
 
   """
-  def get_chat_message!(id), do: Repo.get!(ChatMessage, id)
+  def get_message!(id), do: Repo.get!(ChatMessage, id)
+
+  def get_chat_message!(id), do: Repo.get!(ChatMessage, id) |> Repo.preload([:chat])
 
   @doc """
   Creates a chat_message.
@@ -306,6 +369,27 @@ defmodule WTChat.Chats do
     %ChatMessage{}
     |> ChatMessage.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def new_chat_message(msg, chat, chat_attr) do
+    with {:ok, result} <-
+           Repo.transaction(fn ->
+             msg =
+               %ChatMessage{}
+               |> ChatMessage.changeset(msg)
+               |> Repo.insert!()
+
+             chat_changes = Map.put(chat_attr, :last_msg_id, msg.id)
+
+             chat =
+               chat
+               |> Chat.changeset(chat_changes)
+               |> Repo.update!()
+
+             {:ok, msg, chat}
+           end) do
+      result
+    end
   end
 
   @doc """
