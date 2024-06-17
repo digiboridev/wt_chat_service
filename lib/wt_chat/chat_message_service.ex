@@ -1,7 +1,7 @@
 defmodule WTChat.ChatMessageService do
   alias WTChat.Chats
   alias WTChat.Chats.ChatMessage
-  # alias WTChat.Chats.Chat
+  alias WTChat.ChatService
 
   def message_history(params) do
     chat_id = Map.get(params, "chat_id")
@@ -41,12 +41,31 @@ defmodule WTChat.ChatMessageService do
     end
   end
 
-  def new_dialog_message(from_id, to_id, id_key) do
-    IO.inspect(from_id)
-    IO.inspect(to_id)
-    IO.inspect(id_key)
-    # TODO find dialog or create
-    # TODO new msg
+  def new_dialog_message(from_id, to_id, content, id_key) do
+    case ChatService.find_dialog(from_id, to_id) do
+      # Try to find existing dialog that can be created in time gap
+      {:ok, chat} ->
+        regular_msg = new_message(chat.id, content, from_id, id_key)
+        publish_dialog_message(regular_msg, from_id, to_id)
+        {:ok, regular_msg}
+
+      # If no dialog found, create new dialog and send message
+      nil ->
+        new_chat_params = %{
+          type: "dialog",
+          creator_id: from_id,
+          members: [
+            %{user_id: from_id},
+            %{user_id: to_id}
+          ]
+        }
+
+        chat = ChatService.create(new_chat_params)
+        regular_msg = new_message(chat.id, content, from_id, id_key)
+        publish_dialog_message(regular_msg, from_id, to_id)
+        {:ok, regular_msg}
+    end
+    # TODO: maybe transaction, maybe constraint on dialog
   end
 
   def edit(id, content) do
@@ -85,6 +104,8 @@ defmodule WTChat.ChatMessageService do
     Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:chatroom:#{msg.chat_id}", {:msg_update, msg})
   end
 
+  # Notifies opposite user that can also open new dialog about new message
+  # Also needs to notify sender if he opens new dialog on two devices
   def publish_dialog_message(%ChatMessage{} = msg, user1, user2) do
     Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user1},#{user2}", {:msg_update, msg})
     Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user2},#{user1}", {:msg_update, msg})

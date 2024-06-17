@@ -32,23 +32,26 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
- # Channel for events that related to the specific chat
-  def join("chat:chatroom:" <> chat_id, _, socket ) do
-      IO.puts("chatroom join")
-      IO.puts("chat_id: #{chat_id}")
-      {:ok,socket}
+  # Channel for events that related to the specific chat
+  def join("chat:chatroom:" <> chat_id, _, socket) do
+    IO.puts("chatroom join")
+    IO.puts("chat_id: #{chat_id}")
+    {:ok, socket}
   end
 
   # Fall back channel for chat-less dialog
   # Uses only for wait on first message with newly created chat id for reconnect to the chatroom
   def join("chat:dialog:" <> users, _params, socket) do
-    # TODO: find dialog on join
     from_user = hd(String.split(users, ","))
     to_user = hd(tl(String.split(users, ",")))
     IO.puts("dialog join")
     IO.puts("from_user: #{from_user}")
     IO.puts("to_user: #{to_user}")
-    {:ok,socket}
+
+    case ChatService.find_dialog(from_user, to_user) do
+      {:ok, chat} -> {:ok, %{"chat_id" => chat.id}, socket}
+      nil -> {:ok, socket}
+    end
   end
 
   # User event for syncing the chat list fully or since a specific time
@@ -101,7 +104,21 @@ defmodule WTChatWeb.ChatChannel do
       {:error, reason} ->
         {:reply, {:error, reason}, socket}
     end
+  end
 
+  def handle_in("new_dialog_msg", payload, socket) do
+    user_id = socket.assigns.user_id
+
+    to_id = payload["to_id"]
+    content = payload["content"]
+    id_key = payload["id_key"]
+
+    with {:ok, msg} <- ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
+      json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
+      {:reply, {:ok, json}, socket}
+    else
+      {:error, reason} -> {:reply, {:error, reason}, socket}
+    end
   end
 
   def handle_in(event, _payload, socket) do
