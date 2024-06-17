@@ -4,14 +4,14 @@ defmodule WTChat.ChatMessageService do
   alias WTChat.Chats.Chat
 
   def message_history(params) do
-    chat_id_filter = Map.get(params, "chat_id")
+    chat_id = Map.get(params, "chat_id")
     from = Map.get(params, "from")
     limit = Map.get(params, "limit", 200)
 
-    case {chat_id_filter, from} do
+    case {chat_id, from} do
       {nil, nil} -> Chats.message_history()
-      {chat_id_filter, nil} -> Chats.message_history(chat_id_filter, limit)
-      {chat_id_filter, from} -> Chats.message_history(chat_id_filter, from, limit)
+      {chat_id, nil} -> Chats.message_history(chat_id, limit)
+      {chat_id, from} -> Chats.message_history(chat_id, from, limit)
     end
   end
 
@@ -20,10 +20,10 @@ defmodule WTChat.ChatMessageService do
     from = Map.get(params, "from")
     limit = Map.get(params, "limit", 200)
 
-    case {chat_id, from} do
-      {nil, nil} -> {:error, "from required"}
+    case {from, chat_id} do
+      {nil, nil} -> {:error, "from date required"}
       {from, nil} -> Chats.message_updates(from, limit)
-      {from, chat_id} -> Chats.message_updates( from, limit,chat_id)
+      {from, chat_id} -> Chats.message_updates(from, limit, chat_id)
     end
   end
 

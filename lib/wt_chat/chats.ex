@@ -281,13 +281,18 @@ defmodule WTChat.Chats do
 
   """
   def message_history do
-    Repo.all(ChatMessage)
+    query =
+      from cm in ChatMessage,
+        where: is_nil(cm.deleted_at),
+        select: cm
+
+    Repo.all(query)
   end
 
   def message_history(chat_id) do
     query =
       from cm in ChatMessage,
-        where: cm.chat_id == ^chat_id,
+        where: cm.chat_id == ^chat_id and is_nil(cm.deleted_at),
         select: cm
 
     Repo.all(query)
@@ -296,7 +301,7 @@ defmodule WTChat.Chats do
   def message_history(chat_id, limit) do
     query =
       from cm in ChatMessage,
-        where: cm.chat_id == ^chat_id,
+        where: cm.chat_id == ^chat_id and is_nil(cm.deleted_at),
         order_by: [desc: cm.created_at],
         limit: ^limit,
         select: cm
@@ -304,10 +309,10 @@ defmodule WTChat.Chats do
     Repo.all(query)
   end
 
-  def message_history(chat_id, from , limit) do
+  def message_history(chat_id, from, limit) do
     query =
       from cm in ChatMessage,
-        where: cm.chat_id == ^chat_id and cm.created_at < ^from,
+        where: cm.chat_id == ^chat_id and cm.created_at < ^from and is_nil(cm.deleted_at),
         order_by: [desc: cm.created_at],
         limit: ^limit,
         select: cm
@@ -325,7 +330,7 @@ defmodule WTChat.Chats do
     Repo.all(query)
   end
 
-  def message_updates(from,limit,chat_id) do
+  def message_updates(from, limit, chat_id) do
     query =
       from cm in ChatMessage,
         where: cm.chat_id == ^chat_id and cm.updated_at > ^from,
