@@ -302,7 +302,7 @@ defmodule WTChat.Chats do
     query =
       from cm in ChatMessage,
         where: cm.chat_id == ^chat_id and is_nil(cm.deleted_at),
-        order_by: [desc: cm.created_at],
+        order_by: [desc: cm.inserted_at],
         limit: ^limit,
         select: cm
 
@@ -312,8 +312,8 @@ defmodule WTChat.Chats do
   def message_history(chat_id, from, limit) do
     query =
       from cm in ChatMessage,
-        where: cm.chat_id == ^chat_id and cm.created_at < ^from and is_nil(cm.deleted_at),
-        order_by: [desc: cm.created_at],
+        where: cm.chat_id == ^chat_id and cm.inserted_at < ^from and is_nil(cm.deleted_at),
+        order_by: [desc: cm.inserted_at],
         limit: ^limit,
         select: cm
 
@@ -374,27 +374,6 @@ defmodule WTChat.Chats do
     %ChatMessage{}
     |> ChatMessage.changeset(attrs)
     |> Repo.insert()
-  end
-
-  def new_chat_message(msg, chat, chat_attr) do
-    with {:ok, result} <-
-           Repo.transaction(fn ->
-             msg =
-               %ChatMessage{}
-               |> ChatMessage.changeset(msg)
-               |> Repo.insert!()
-
-             chat_changes = Map.put(chat_attr, :last_msg_id, msg.id)
-
-             chat =
-               chat
-               |> Chat.changeset(chat_changes)
-               |> Repo.update!()
-
-             {:ok, msg, chat}
-           end) do
-      result
-    end
   end
 
   @doc """

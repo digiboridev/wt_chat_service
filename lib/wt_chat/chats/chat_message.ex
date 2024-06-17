@@ -13,7 +13,6 @@ defmodule WTChat.Chats.ChatMessage do
     field :sms_number, :string
     field :content, :string
     field :idempotency_key, :string
-    field :created_at, :utc_datetime_usec
     field :edited_at, :utc_datetime_usec
     field :deleted_at, :utc_datetime_usec
     belongs_to :chat, WTChat.Chats.Chat, define_field: false, on_replace: :update
@@ -33,12 +32,11 @@ defmodule WTChat.Chats.ChatMessage do
       :sms_number,
       :content,
       :idempotency_key,
-      :created_at,
       :edited_at,
       :deleted_at
     ])
     |> cast_assoc(:chat)
-    |> validate_required([:sender_id, :content, :created_at])
+    |> validate_required([:sender_id, :content])
   end
 
 end

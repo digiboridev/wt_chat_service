@@ -6,11 +6,6 @@ defmodule WTChat.Chats.Chat do
     field :name, :string
     field :type, Ecto.Enum, values: [:dialog, :group]
     field :creator_id, :string
-    field :last_msg_preview, :string
-    field :last_msg_at, :utc_datetime_usec
-    field :last_msg_sender_id, :string
-    field :last_msg_id, :id
-    field :message_count, :integer, default: 0
     field :deleted_at, :utc_datetime_usec
     field :v, :integer, default: 1
     has_many :members, WTChat.Chats.ChatMember, on_replace: :delete_if_exists
@@ -26,11 +21,6 @@ defmodule WTChat.Chats.Chat do
           :type,
           :name,
           :creator_id,
-          :last_msg_preview,
-          :last_msg_at,
-          :last_msg_sender_id,
-          :last_msg_id,
-          :message_count,
           :deleted_at,
           :updated_at
         ])

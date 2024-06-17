@@ -1,7 +1,7 @@
 defmodule WTChat.ChatMessageService do
   alias WTChat.Chats
   alias WTChat.Chats.ChatMessage
-  alias WTChat.Chats.Chat
+  # alias WTChat.Chats.Chat
 
   def message_history(params) do
     chat_id = Map.get(params, "chat_id")
@@ -28,55 +28,47 @@ defmodule WTChat.ChatMessageService do
   end
 
   def new_message(chat_id, content, sender_id, id_key) do
-    chat = Chats.get_chat_with_members!(chat_id)
-    time = DateTime.utc_now()
-    content_preview = String.slice(content, 0, 20)
-
     msg_attr = %{
       content: content,
       chat_id: chat_id,
       sender_id: sender_id,
-      created_at: time,
       idempotency_key: id_key
     }
 
-    chat_attr = %{
-      id: chat.id,
-      last_msg_preview: content_preview,
-      last_msg_at: time,
-      last_msg_sender_id: sender_id,
-      message_count: chat.message_count + 1
-    }
-
-    with {:ok, %ChatMessage{} = msg, %Chat{} = chat} <-
-           Chats.new_chat_message(msg_attr, chat, chat_attr) do
-      publish_chat_message(msg, chat)
+    with {:ok, %ChatMessage{} = msg} <- Chats.create_chat_message(msg_attr) do
+      publish_chat_message(msg)
       {:ok, msg}
     end
   end
 
-  def edit(id, content) do
-    chat_message = Chats.get_chat_message!(id)
+  def new_dialog_message(from_id, to_id, id_key) do
+    IO.inspect(from_id)
+    IO.inspect(to_id)
+    IO.inspect(id_key)
+    # TODO find dialog or create
+    # TODO new msg
+  end
 
-    chat_message_params = %{
+  def edit(id, content) do
+    msg = Chats.get_chat_message!(id)
+
+    change = %{
       content: content,
       edited_at: DateTime.utc_now()
     }
 
-    with {:ok, %ChatMessage{} = chat_message} <-
-           Chats.update_chat_message(chat_message, chat_message_params) do
-      chat = chat_message.chat
-      chat |> IO.inspect()
-      {:ok, chat_message}
+    with {:ok, %ChatMessage{} = msg} <- Chats.update_chat_message(msg, change) do
+      publish_chat_message(msg)
+      {:ok, msg}
     end
   end
 
   def soft_delete(id) do
-    chat_message = Chats.get_message!(id)
-    chat_message_params = %{"deleted_at" => DateTime.utc_now()}
+    msg = Chats.get_message!(id)
+    change = %{"deleted_at" => DateTime.utc_now()}
 
-    with {:ok, %ChatMessage{} = chat_message} <-
-           Chats.update_chat_message(chat_message, chat_message_params) do
+    with {:ok, %ChatMessage{} = chat_message} <- Chats.update_chat_message(msg, change) do
+      publish_chat_message(msg)
       {:ok, chat_message}
     end
   end
@@ -89,12 +81,8 @@ defmodule WTChat.ChatMessageService do
     end
   end
 
-  def publish_chat_message(%ChatMessage{} = msg, %Chat{} = chat) do
-    Enum.each(chat.members, fn member ->
-      Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:user:#{member.user_id}", {:chat_update, chat})
-    end)
-
-    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:chatroom:#{chat.id}", {:msg_update, msg})
+  def publish_chat_message(%ChatMessage{} = msg) do
+    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:chatroom:#{msg.chat_id}", {:msg_update, msg})
   end
 
   def publish_dialog_message(%ChatMessage{} = msg, user1, user2) do
