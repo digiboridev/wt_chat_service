@@ -5,8 +5,13 @@ defmodule WTChatWeb.ChatController do
 
   action_fallback WTChatWeb.FallbackController
 
-  def index(conn, params) do
-    chats = ChatService.index(params)
+  def chat_list(conn, params) do
+    chats = ChatService.chat_list(params)
+    render(conn, :index, chats: chats)
+  end
+
+  def chat_updates(conn, params) do
+    chats = ChatService.chat_updates(params)
     render(conn, :index, chats: chats)
   end
 

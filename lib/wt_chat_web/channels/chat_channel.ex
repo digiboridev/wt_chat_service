@@ -1,7 +1,6 @@
 defmodule WTChatWeb.ChatChannel do
   use Phoenix.Channel
 
-  alias WTChat.Chats
   alias WTChat.Chats.Chat
   alias WTChat.Chats.ChatMessage
 
@@ -54,22 +53,27 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  # User event for syncing the chat list fully or since a specific time
-  def handle_in("chat_list_get", payload, socket) do
+  # User event for getting the actual chat list
+  def handle_in("chat_list_get", _payload, socket) do
     user_id = socket.assigns.user_id
-    since = payload["since"]
+    chats = ChatService.chat_list(%{member_id: user_id})
+
+    json = %{chats: chats} |> ChatJSON.index()
+    {:reply, {:ok, json}, socket}
+  end
+
+  # User event for syncing chat list updates from a specific time
+  def handle_in("chat_list_updates", payload, socket) do
+    user_id = socket.assigns.user_id
+    updates_from = payload["updates_from"]
+    limit = payload["limit"]
 
     chats =
-      case since do
-        nil ->
-          Chats.list_chats(user_id)
-
-        _ ->
-          Chats.list_chats(
-            user_id,
-            since |> DateTime.from_unix!(:microsecond) |> DateTime.to_iso8601()
-          )
-      end
+      ChatService.chat_updates(%{
+        member_id: user_id,
+        from: updates_from |> DateTime.from_unix!(:microsecond) |> DateTime.to_iso8601(),
+        limit: limit
+      })
 
     json = %{chats: chats} |> ChatJSON.index()
     {:reply, {:ok, json}, socket}

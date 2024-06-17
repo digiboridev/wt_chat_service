@@ -10,40 +10,51 @@ defmodule WTChat.Chats do
   alias WTChat.Chats.ChatMember
   alias WTChat.Chats.ChatMessage
 
-  @doc """
-  Returns the list of chats.
 
-  ## Examples
-
-      iex> list_chats()
-      [%Chat{}, ...]
-
-  """
-  def list_chats do
-    Repo.all(Chat) |> Repo.preload(:members)
-  end
-
-  def list_chats(member_id) do
+  def chat_list() do
     query =
       from c in Chat,
-        join: cm in ChatMember,
-        on: c.id == cm.chat_id,
-        where: cm.user_id == ^member_id,
+        where: is_nil(c.deleted_at),
+        order_by: [desc: c.inserted_at],
         select: c
 
     Repo.all(query) |> Repo.preload(:members)
   end
 
-  def list_chats(member_id, updated_at) do
+  def chat_list(member_id) do
     query =
       from c in Chat,
         join: cm in ChatMember,
         on: c.id == cm.chat_id,
-        where: cm.user_id == ^member_id and c.updated_at > ^updated_at,
+        where: cm.user_id == ^member_id and is_nil(c.deleted_at),
+        order_by: [desc: c.inserted_at],
         select: c
 
     Repo.all(query) |> Repo.preload(:members)
   end
+
+  def chat_updates(from, limit) do
+    query =
+      from c in Chat,
+        where: c.updated_at > ^from,
+        limit: ^limit,
+        select: c
+
+    Repo.all(query) |> Repo.preload(:members)
+  end
+
+  def chat_updates(from, limit, member_id) do
+    query =
+      from c in Chat,
+        join: cm in ChatMember,
+        on: c.id == cm.chat_id,
+        where: cm.user_id == ^member_id and c.updated_at > ^from,
+        limit: ^limit,
+        select: c
+
+    Repo.all(query) |> Repo.preload(:members)
+  end
+
 
   @doc """
   Gets a single chat.

@@ -24,21 +24,23 @@ defmodule WTChatWeb.Router do
   scope "/api", WTChatWeb do
     pipe_through :api
 
-    get "/chats", ChatController, :index
-    post "/chats", ChatController, :create
-    get "/chats/find_dialog", ChatController, :find_dialog
-    get "/chats/:id", ChatController, :show
-    patch "/chats/:id", ChatController, :update
-    delete "/chats/:id", ChatController, :soft_delete
-    post "/chats/:id/leave", ChatController, :leave_chat
-    post "/chats/:id/member_add", ChatController, :add_member
-    post "/chats/:id/member_block", ChatController, :block_member
+    get "/chatlist", ChatController, :chat_list
+    get "/chatlist/updates", ChatController, :chat_updates
+    get "/chatlist/find_dialog", ChatController, :find_dialog
+    get "/chatlist/:id", ChatController, :show
 
-    get "/chats/:chat_id/message_history", ChatMessageController, :message_history
-    get "/chats/:chat_id/message_updates", ChatMessageController, :message_updates
-    post "/chats/:chat_id/messages", ChatMessageController, :create
-    patch "/chats/:chat_id/messages/:id", ChatMessageController, :edit
-    delete "/chats/:chat_id/messages/:id", ChatMessageController, :soft_delete
+    post "/chatlist", ChatController, :create
+    patch "/chatlist/:id", ChatController, :update
+    delete "/chatlist/:id", ChatController, :soft_delete
+    post "/chatlist/:id/leave", ChatController, :leave_chat
+    post "/chatlist/:id/member_add", ChatController, :add_member
+    post "/chatlist/:id/member_block", ChatController, :block_member
+
+    get "/chatlist/:chat_id/message_history", ChatMessageController, :message_history
+    get "/chatlist/:chat_id/message_updates", ChatMessageController, :message_updates
+    post "/chatlist/:chat_id/messages", ChatMessageController, :create
+    patch "/chatlist/:chat_id/messages/:id", ChatMessageController, :edit
+    delete "/chatlist/:chat_id/messages/:id", ChatMessageController, :soft_delete
 
   end
 
