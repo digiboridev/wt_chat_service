@@ -56,7 +56,7 @@ defmodule WTChatWeb.ChatChannel do
   # User event for getting the actual chat list (desc order, no soft deleted)
   def handle_in("chat_list_get", _payload, socket) do
     user_id = socket.assigns.user_id
-    chats = ChatService.chat_list(%{member_id: user_id})
+    chats = ChatService.chat_list(user_id)
 
     json = %{chats: chats} |> ChatJSON.index()
     {:reply, {:ok, json}, socket}
@@ -69,11 +69,11 @@ defmodule WTChatWeb.ChatChannel do
     limit = payload["limit"]
 
     chats =
-      ChatService.chat_updates(%{
-        member_id: user_id,
-        from: updates_from |> DateTime.from_unix!(:microsecond) |> DateTime.to_iso8601(),
-        limit: limit
-      })
+      ChatService.chat_updates(
+        user_id,
+        updates_from |> DateTime.from_unix!(:microsecond) |> DateTime.to_iso8601(),
+        limit
+      )
 
     json = %{chats: chats} |> ChatJSON.index()
     {:reply, {:ok, json}, socket}
@@ -99,7 +99,7 @@ defmodule WTChatWeb.ChatChannel do
     from = payload["from"]
     limit = payload["limit"]
 
-    messages = ChatMessageService.message_history(%{chat_id: chat_id, from: from, limit: limit})
+    messages = ChatMessageService.message_history(chat_id, from, limit)
 
     json = %{chat_messages: messages} |> ChatMessageJSON.index()
     {:reply, {:ok, json}, socket}
@@ -111,7 +111,7 @@ defmodule WTChatWeb.ChatChannel do
     from = payload["from"]
     limit = payload["limit"]
 
-    messages = ChatMessageService.message_updates(%{chat_id: chat_id, from: from, limit: limit})
+    messages = ChatMessageService.message_updates(chat_id, from, limit)
 
     json = %{chat_messages: messages} |> ChatMessageJSON.index()
     {:reply, {:ok, json}, socket}

@@ -3,20 +3,14 @@ defmodule WTChat.ChatService do
   alias WTChat.Chats
   alias WTChat.Chats.Chat
 
-
-  def chat_list(params) do
-    member_id = Map.get(params, "member_id")
-
+  def chat_list(member_id) do
     case member_id do
       nil -> Chats.chat_list()
       _ -> Chats.chat_list(member_id)
     end
   end
 
-  def chat_updates(params) do
-    from = Map.get(params, "from")
-    limit = Map.get(params, "limit", 200)
-    member_id = Map.get(params, "member_id")
+  def chat_updates(member_id,from, limit) do
 
     case {from, member_id} do
       {nil, nil} -> {:error, "from date required"}
@@ -91,6 +85,7 @@ defmodule WTChat.ChatService do
 
   def find_dialog(from_user, to_user) do
     result = Chats.find_dialog(from_user, to_user)
+
     case result do
       %Chat{} -> {:ok, result}
       nil -> nil

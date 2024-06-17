@@ -3,11 +3,7 @@ defmodule WTChat.ChatMessageService do
   alias WTChat.Chats.ChatMessage
   alias WTChat.ChatService
 
-  def message_history(params) do
-    chat_id = Map.get(params, "chat_id")
-    from = Map.get(params, "from")
-    limit = Map.get(params, "limit", 200)
-
+  def message_history(chat_id, from, limit) do
     case {chat_id, from} do
       {nil, nil} -> Chats.message_history()
       {chat_id, nil} -> Chats.message_history(chat_id, limit)
@@ -15,11 +11,7 @@ defmodule WTChat.ChatMessageService do
     end
   end
 
-  def message_updates(params) do
-    chat_id = Map.get(params, "chat_id")
-    from = Map.get(params, "from")
-    limit = Map.get(params, "limit", 200)
-
+  def message_updates(chat_id, from, limit) do
     case {from, chat_id} do
       {nil, nil} -> {:error, "from date required"}
       {from, nil} -> Chats.message_updates(from, limit)

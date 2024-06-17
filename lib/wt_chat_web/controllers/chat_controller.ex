@@ -6,12 +6,18 @@ defmodule WTChatWeb.ChatController do
   action_fallback WTChatWeb.FallbackController
 
   def chat_list(conn, params) do
-    chats = ChatService.chat_list(params)
+    member_id = Map.get(params, "member_id")
+
+    chats = ChatService.chat_list(member_id)
     render(conn, :index, chats: chats)
   end
 
   def chat_updates(conn, params) do
-    chats = ChatService.chat_updates(params)
+    member_id = Map.get(params, "member_id")
+    from = Map.get(params, "from")
+    limit = Map.get(params, "limit", 200)
+
+    chats = ChatService.chat_updates(member_id, from, limit)
     render(conn, :index, chats: chats)
   end
 

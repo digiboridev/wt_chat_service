@@ -7,12 +7,20 @@ defmodule WTChatWeb.ChatMessageController do
   action_fallback WTChatWeb.FallbackController
 
   def message_history(conn, params) do
-    chat_messages = ChatMessageService.message_history(params)
+    chat_id = Map.get(params, "chat_id")
+    from = Map.get(params, "from")
+    limit = Map.get(params, "limit", 200)
+
+    chat_messages = ChatMessageService.message_history(chat_id, from, limit)
     render(conn, :index, chat_messages: chat_messages)
   end
 
   def message_updates(conn, params) do
-    chat_messages = ChatMessageService.message_updates(params)
+    chat_id = Map.get(params, "chat_id")
+    from = Map.get(params, "from")
+    limit = Map.get(params, "limit", 200)
+
+    chat_messages = ChatMessageService.message_updates(chat_id, from, limit)
     render(conn, :index, chat_messages: chat_messages)
   end
 
@@ -42,6 +50,8 @@ defmodule WTChatWeb.ChatMessageController do
       render(conn, :show, chat_message: chat_message)
     end
   end
+
+  # TODO reply, forward
 
   def soft_delete(conn, %{"id" => id}) do
     with {:ok, %ChatMessage{} = chat_message} <- ChatMessageService.soft_delete(id) do
