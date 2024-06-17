@@ -53,7 +53,7 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  # User event for getting the actual chat list
+  # User event for getting the actual chat list (desc order, no soft deleted)
   def handle_in("chat_list_get", _payload, socket) do
     user_id = socket.assigns.user_id
     chats = ChatService.chat_list(%{member_id: user_id})
@@ -91,6 +91,30 @@ defmodule WTChatWeb.ChatChannel do
       {:error, reason} ->
         {:reply, {:error, reason}, socket}
     end
+  end
+
+  # User event for fetching chat messages history (desc order, no soft deleted)
+  def handle_in("messages_history", payload, socket) do
+    chat_id = payload["chat_id"]
+    from = payload["from"]
+    limit = payload["limit"]
+
+    messages = ChatMessageService.message_history(%{chat_id: chat_id, from: from, limit: limit})
+
+    json = %{chat_messages: messages} |> ChatMessageJSON.index()
+    {:reply, {:ok, json}, socket}
+  end
+
+  # User event for fetching chat messages updates from a specific time
+  def handle_in("messages_updates", payload, socket) do
+    chat_id = payload["chat_id"]
+    from = payload["from"]
+    limit = payload["limit"]
+
+    messages = ChatMessageService.message_updates(%{chat_id: chat_id, from: from, limit: limit})
+
+    json = %{chat_messages: messages} |> ChatMessageJSON.index()
+    {:reply, {:ok, json}, socket}
   end
 
   def handle_in("new_msg", payload, socket) do
