@@ -65,15 +65,10 @@ defmodule WTChatWeb.ChatChannel do
   # User event for syncing chat list updates from a specific time
   def handle_in("chat_list_updates", payload, socket) do
     user_id = socket.assigns.user_id
-    updates_from = payload["updates_from"]
+    from = payload["from"]
     limit = payload["limit"]
 
-    chats =
-      ChatService.chat_updates(
-        user_id,
-        updates_from |> DateTime.from_unix!(:microsecond) |> DateTime.to_iso8601(),
-        limit
-      )
+    chats = ChatService.chat_updates(user_id, from, limit)
 
     json = %{chats: chats} |> ChatJSON.index()
     {:reply, {:ok, json}, socket}
