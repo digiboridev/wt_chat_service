@@ -2,10 +2,13 @@ import Config
 
 # Configure your database
 config :wt_chat, WTChat.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "wt_chat_dev",
+  # username: "postgres",
+  # password: "postgres",
+  # hostname: "localhost",
+  # database: "wt_chat_dev",
+  url: System.get_env("DATABASE_URL"),
+  ssl: true,
+  ssl_opts: [verify: :verify_none],
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

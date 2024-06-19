@@ -12,11 +12,6 @@ config :wt_chat,
   ecto_repos: [WTChat.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-config :wt_chat, WTChat.Repo,
-  url: System.get_env("PG_URL"),
-  ssl: true,
-  ssl_opts: [verify: :verify_none]
-
 # Configures the endpoint
 config :wt_chat, WTChatWeb.Endpoint,
   url: [host: "localhost"],
