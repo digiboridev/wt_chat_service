@@ -19,7 +19,7 @@ defmodule WTChatWeb.ChatJSON do
     %{data: data(chat)}
   end
 
-  def showFlat(%{chat: chat}) do
+  def showFlat(%Chat{} = chat) do
     data(chat)
   end
 

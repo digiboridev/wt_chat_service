@@ -80,7 +80,7 @@ defmodule WTChatWeb.ChatChannel do
 
     case chat do
       {:ok, chat} ->
-        json = %{chat: chat} |> ChatJSON.showFlat()
+        json = chat |> ChatJSON.showFlat()
         {:reply, {:ok, json}, socket}
 
       {:error, reason} ->
@@ -121,8 +121,8 @@ defmodule WTChatWeb.ChatChannel do
 
     case ChatMessageService.new_message(chat_id, content, user_id, id_key) do
       {:ok, msg} ->
-        json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
-        {:reply, {:ok, json}, socket}
+        msg_json = msg |> ChatMessageJSON.showFlat()
+        {:reply, {:ok, msg_json}, socket}
 
       {:error, reason} ->
         {:reply, {:error, reason}, socket}
@@ -136,9 +136,10 @@ defmodule WTChatWeb.ChatChannel do
     content = payload["content"]
     id_key = payload["id_key"]
 
-    with {:ok, msg} <- ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
-      json = %{chat_message: msg} |> ChatMessageJSON.showFlat()
-      {:reply, {:ok, json}, socket}
+    with {:ok, msg, chat} <- ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
+      msg_json = msg |> ChatMessageJSON.showFlat()
+      chat_json = chat |> ChatJSON.showFlat()
+      {:reply, {:ok, %{ msg: msg_json, chat: chat_json}}, socket}
     else
       {:error, reason} -> {:reply, {:error, reason}, socket}
     end
@@ -149,14 +150,14 @@ defmodule WTChatWeb.ChatChannel do
     {:noreply, socket}
   end
 
-  def handle_info({:chat_update, %Chat{} = data}, socket) do
-    json = %{chat: data} |> ChatJSON.showFlat()
+  def handle_info({:chat_update, %Chat{} = chat}, socket) do
+    json = chat |> ChatJSON.showFlat()
     push(socket, "chat_update", json)
     {:noreply, socket}
   end
 
   def handle_info({:msg_update, %ChatMessage{} = message}, socket) do
-    json = %{chat_message: message} |> ChatMessageJSON.showFlat()
+    json = message |> ChatMessageJSON.showFlat()
     push(socket, "message_update", json)
     {:noreply, socket}
   end

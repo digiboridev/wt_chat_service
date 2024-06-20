@@ -2,6 +2,7 @@ defmodule WTChat.ChatMessageService do
   alias WTChat.Chats
   alias WTChat.Chats.ChatMessage
   alias WTChat.ChatService
+  alias WTChat.Chats.Chat
 
   def message_history(chat_id, from, limit) do
     case {chat_id, from} do
@@ -37,26 +38,30 @@ defmodule WTChat.ChatMessageService do
     case ChatService.find_dialog(from_id, to_id) do
       # Try to find existing dialog that can be created in time gap
       {:ok, chat} ->
-        regular_msg = new_message(chat.id, content, from_id, id_key)
-        publish_dialog_message(regular_msg, from_id, to_id)
-        {:ok, regular_msg}
+        with {:ok, %ChatMessage{} = msg} <- new_message(chat.id, content, from_id, id_key) do
+          publish_chat_message(msg)
+          {:ok, msg, chat}
+        end
 
       # If no dialog found, create new dialog and send message
       nil ->
         new_chat_params = %{
-          type: "dialog",
-          creator_id: from_id,
-          members: [
-            %{user_id: from_id},
-            %{user_id: to_id}
+          "type" => "dialog",
+          "creator_id" => from_id,
+          "members" => [
+            %{"user_id" => from_id},
+            %{"user_id" => to_id}
           ]
         }
 
-        chat = ChatService.create(new_chat_params)
-        regular_msg = new_message(chat.id, content, from_id, id_key)
-        publish_dialog_message(regular_msg, from_id, to_id)
-        {:ok, regular_msg}
+        with {:ok, %Chat{} = chat} <- ChatService.create(new_chat_params) do
+          with {:ok, %ChatMessage{} = msg} <- new_message(chat.id, content, from_id, id_key) do
+            publish_chat_message(msg)
+            {:ok, msg, chat}
+          end
+        end
     end
+
     # TODO: maybe transaction, maybe constraint on dialog
   end
 
@@ -98,8 +103,8 @@ defmodule WTChat.ChatMessageService do
 
   # Notifies opposite user that can also open new dialog about new message
   # Also needs to notify sender if he opens new dialog on two devices
-  def publish_dialog_message(%ChatMessage{} = msg, user1, user2) do
-    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user1},#{user2}", {:msg_update, msg})
-    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user2},#{user1}", {:msg_update, msg})
-  end
+  # def publish_dialog_message(%ChatMessage{} = msg, user1, user2) do
+  #   Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user1},#{user2}", {:msg_update, msg})
+  #   Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user2},#{user1}", {:msg_update, msg})
+  # end
 end
