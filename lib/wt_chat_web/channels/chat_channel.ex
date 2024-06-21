@@ -124,8 +124,9 @@ defmodule WTChatWeb.ChatChannel do
         msg_json = msg |> ChatMessageJSON.showFlat()
         {:reply, {:ok, msg_json}, socket}
 
-      {:error, reason} ->
-        {:reply, {:error, reason}, socket}
+      # TODO parse reason
+      {:error, _reason} ->
+        {:reply, :error, socket}
     end
   end
 
@@ -136,12 +137,13 @@ defmodule WTChatWeb.ChatChannel do
     content = payload["content"]
     id_key = payload["id_key"]
 
-    with {:ok, msg, chat} <- ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
+    with {:ok, msg, chat} <-
+           ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
       msg_json = msg |> ChatMessageJSON.showFlat()
       chat_json = chat |> ChatJSON.showFlat()
-      {:reply, {:ok, %{ msg: msg_json, chat: chat_json}}, socket}
+      {:reply, {:ok, %{msg: msg_json, chat: chat_json}}, socket}
     else
-      {:error, reason} -> {:reply, {:error, reason}, socket}
+      {:error, _reason} -> {:reply, :error, socket}
     end
   end
 

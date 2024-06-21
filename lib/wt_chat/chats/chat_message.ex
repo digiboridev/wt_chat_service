@@ -37,6 +37,7 @@ defmodule WTChat.Chats.ChatMessage do
     ])
     |> cast_assoc(:chat)
     |> validate_required([:sender_id, :content])
+    |> unique_constraint(:idempotency_key)
   end
 
 end
