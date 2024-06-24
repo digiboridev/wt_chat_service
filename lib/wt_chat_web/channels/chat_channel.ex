@@ -147,6 +147,13 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
+  @impl true
+  def handle_in("typing", payload, %{assigns: %{user_id: user_id}} = socket) do
+    broadcast_from(socket, "typing", %{payload | "user_id" => user_id})
+
+    {:noreply, socket}
+  end
+
   def handle_in(event, _payload, socket) do
     IO.puts(event)
     {:noreply, socket}
