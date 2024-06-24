@@ -13,6 +13,7 @@ defmodule WTChat.Chats.ChatMessage do
     field :sms_number, :string
     field :content, :string
     field :idempotency_key, :string
+    field :viewed_at, :utc_datetime_usec
     field :edited_at, :utc_datetime_usec
     field :deleted_at, :utc_datetime_usec
     belongs_to :chat, WTChat.Chats.Chat, define_field: false, on_replace: :update
@@ -32,6 +33,7 @@ defmodule WTChat.Chats.ChatMessage do
       :sms_number,
       :content,
       :idempotency_key,
+      :viewed_at,
       :edited_at,
       :deleted_at
     ])
@@ -39,5 +41,4 @@ defmodule WTChat.Chats.ChatMessage do
     |> validate_required([:sender_id, :content])
     |> unique_constraint(:idempotency_key)
   end
-
 end

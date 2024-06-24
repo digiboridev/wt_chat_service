@@ -13,6 +13,7 @@ defmodule WTChat.Repo.Migrations.CreateChatMessages do
       add :sms_number, :string
       add :content, :text, null: false
       add :idempotency_key, :string, null: false
+      add :viewed_at, :utc_datetime_usec
       add :edited_at, :utc_datetime_usec
       add :deleted_at, :utc_datetime_usec
       timestamps(type: :utc_datetime_usec)

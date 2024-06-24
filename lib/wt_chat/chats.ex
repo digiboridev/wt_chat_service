@@ -10,7 +10,6 @@ defmodule WTChat.Chats do
   alias WTChat.Chats.ChatMember
   alias WTChat.Chats.ChatMessage
 
-
   def chat_list() do
     query =
       from c in Chat,
@@ -54,7 +53,6 @@ defmodule WTChat.Chats do
 
     Repo.all(query) |> Repo.preload(:members)
   end
-
 
   @doc """
   Gets a single chat.
@@ -432,5 +430,11 @@ defmodule WTChat.Chats do
   """
   def change_chat_message(%ChatMessage{} = chat_message, attrs \\ %{}) do
     ChatMessage.changeset(chat_message, attrs)
+  end
+
+  def mark_messages_as_viewed(message_ids, viewed_at) when is_list(message_ids) do
+    ChatMessage
+    |> where([m], m.id in ^message_ids)
+    |> Repo.update_all(set: [viewed_at: viewed_at])
   end
 end

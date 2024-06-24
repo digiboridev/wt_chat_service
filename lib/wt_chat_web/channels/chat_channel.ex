@@ -1,6 +1,7 @@
 defmodule WTChatWeb.ChatChannel do
   use Phoenix.Channel
 
+  alias WTChat.Chats
   alias WTChat.Chats.Chat
   alias WTChat.Chats.ChatMessage
 
@@ -147,7 +148,16 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  @impl true
+  def handle_in("mark_as_viewed", payload, %{assigns: %{user_id: user_id}} = socket) do
+    viewed_at = DateTime.utc_now()
+    message_ids = payload["message_ids"]
+
+    Chats.mark_messages_as_viewed(message_ids, viewed_at)
+    broadcast_from(socket, "messages_viewed", %{payload | "user_id" => user_id, "viewed_at" => viewed_at})
+
+    {:noreply, socket}
+  end
+
   def handle_in("typing", payload, %{assigns: %{user_id: user_id}} = socket) do
     broadcast_from(socket, "typing", %{payload | "user_id" => user_id})
 
