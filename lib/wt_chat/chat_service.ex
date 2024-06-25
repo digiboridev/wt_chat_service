@@ -10,8 +10,7 @@ defmodule WTChat.ChatService do
     end
   end
 
-  def chat_updates(member_id,from, limit) do
-
+  def chat_updates(member_id, from, limit) do
     case {from, member_id} do
       {nil, nil} -> {:error, "from date required"}
       {from, nil} -> Chats.chat_updates(from, limit)
@@ -23,6 +22,25 @@ defmodule WTChat.ChatService do
     # append joined_at to each member
     chat_params =
       Map.put(chat_params, "members", append_members_join_date(chat_params["members"]))
+
+    with {:ok, %Chat{} = chat} <- Chats.create_chat(chat_params) do
+      publish_chat_update(%Chat{} = chat)
+      {:ok, chat}
+    end
+  end
+
+  def create_group(name, creator_id, members_ids) do
+    members_ids = Enum.uniq([creator_id | members_ids])
+
+    chat_params = %{
+      name: name,
+      type: :group,
+      creator_id: creator_id,
+      members:
+        Enum.map(members_ids, fn member_id ->
+          %{user_id: member_id, joined_at: DateTime.utc_now()}
+        end)
+    }
 
     with {:ok, %Chat{} = chat} <- Chats.create_chat(chat_params) do
       publish_chat_update(%Chat{} = chat)

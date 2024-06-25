@@ -89,6 +89,21 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
+
+  def handle_in("group_create", %{"members_ids" => members_ids, "name" => name}, socket) do
+    user_id = socket.assigns.user_id
+    chat = ChatService.create_group(name, user_id, members_ids)
+
+    case chat do
+      {:ok, chat} ->
+        json = chat |> ChatJSON.showFlat()
+        {:reply, {:ok, json}, socket}
+
+      {:error, _reason} ->
+        {:reply, :error, socket}
+    end
+  end
+
   # User event for fetching chat messages history (desc order, no soft deleted)
   def handle_in("messages_history", payload, socket) do
     chat_id = payload["chat_id"]
