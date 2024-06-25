@@ -8,7 +8,7 @@ defmodule WTChatWeb.ChatMemberJSON do
     %{data: for(chat_member <- chat_members, do: data(chat_member))}
   end
 
-  def indexFlat(%{chat_members: chat_members}) do
+  def index_flat(%{chat_members: chat_members}) do
     for(chat_member <- chat_members, do: data(chat_member))
   end
 
@@ -19,7 +19,7 @@ defmodule WTChatWeb.ChatMemberJSON do
     %{data: data(chat_member)}
   end
 
-  def showFlat(%{chat_member: chat_member}) do
+  def show_flat(%{chat_member: chat_member}) do
     data(chat_member)
   end
 

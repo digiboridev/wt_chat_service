@@ -1,30 +1,26 @@
 defmodule WTChatWeb.ChatChannel do
   use Phoenix.Channel
 
+  require Logger
+
   alias WTChat.Chats
   alias WTChat.Chats.Chat
   alias WTChat.Chats.ChatMessage
-
   alias WTChatWeb.ChatJSON
-  # alias WTChatWeb.ChatMemberJSON
   alias WTChatWeb.ChatMessageJSON
-
   alias WTChat.ChatService
-  # alias WTChat.ChatMemberService
   alias WTChat.ChatMessageService
 
-  # Service channel that needs to reply user with the user_id that verified in the connect function
+  @impl true
   def join("chat:auth", _message, socket) do
     userId = socket.assigns.user_id
     {:ok, %{"user_id" => userId}, socket}
   end
 
-  # Channel for events that related to the specific user
+  @impl true
   def join("chat:user:" <> topic_user_id, _message, socket) do
-    socket_user_id = socket.assigns.user_id
-
     cond do
-      socket_user_id == topic_user_id ->
+      socket.assigns.user_id == topic_user_id ->
         {:ok, socket}
 
       true ->
@@ -32,110 +28,92 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  # Channel for events that related to the specific chat
-  def join("chat:chatroom:" <> chat_id, _, socket) do
-    IO.puts("chatroom join")
-    IO.puts("chat_id: #{chat_id}")
-    {:ok, socket}
+  def join("chat:" <> chat_id, _, socket) do
+    {:ok, assign(socket, chat_id: chat_id)}
   end
 
-  # User event for getting the actual chat list (desc order, no soft deleted)
-  def handle_in("chat_list_get", _payload, socket) do
-    user_id = socket.assigns.user_id
-    chats = ChatService.chat_list(user_id)
-
-    json = %{chats: chats} |> ChatJSON.index()
-    {:reply, {:ok, json}, socket}
-  end
-
-  # User event for syncing chat list updates from a specific time
-  def handle_in("chat_list_updates", payload, socket) do
-    user_id = socket.assigns.user_id
-    from = payload["from"]
-    limit = payload["limit"]
-
-    chats = ChatService.chat_updates(user_id, from, limit)
-
-    json = %{chats: chats} |> ChatJSON.index()
-    {:reply, {:ok, json}, socket}
-  end
-
-  def handle_in("group_create", %{"members_ids" => members_ids, "name" => name}, socket) do
-    user_id = socket.assigns.user_id
-    chat = ChatService.create_group(name, user_id, members_ids)
-
-    case chat do
-      {:ok, chat} ->
-        json = chat |> ChatJSON.showFlat()
-        {:reply, {:ok, json}, socket}
-
-      {:error, _reason} ->
-        {:reply, :error, socket}
-    end
-  end
-
-  # User event for fetching chat messages history (desc order, no soft deleted)
-  def handle_in("messages_history", payload, socket) do
-    chat_id = payload["chat_id"]
-    from = payload["from"]
-    limit = payload["limit"]
-
-    messages = ChatMessageService.message_history(chat_id, from, limit)
-
-    json = %{chat_messages: messages} |> ChatMessageJSON.index()
-    {:reply, {:ok, json}, socket}
-  end
-
-  # User event for fetching chat messages updates from a specific time
-  def handle_in("messages_updates", payload, socket) do
-    chat_id = payload["chat_id"]
-    from = payload["from"]
-    limit = payload["limit"]
-
-    messages = ChatMessageService.message_updates(chat_id, from, limit)
-
-    json = %{chat_messages: messages} |> ChatMessageJSON.index()
-    {:reply, {:ok, json}, socket}
-  end
-
-  def handle_in("new_msg", payload, socket) do
-    user_id = socket.assigns.user_id
-
-    chat_id = payload["chat_id"]
-    content = payload["content"]
-    id_key = payload["id_key"]
-
-    case ChatMessageService.new_message(chat_id, content, user_id, id_key) do
-      {:ok, msg} ->
-        msg_json = msg |> ChatMessageJSON.showFlat()
-        {:reply, {:ok, msg_json}, socket}
-
-      # TODO parse reason
-      {:error, _reason} ->
-        {:reply, :error, socket}
-    end
-  end
-
-  def handle_in("new_dialog_msg", payload, socket) do
-    user_id = socket.assigns.user_id
-
-    to_id = payload["to_id"]
-    content = payload["content"]
-    id_key = payload["id_key"]
-
-    with {:ok, msg, chat} <-
-           ChatMessageService.new_dialog_message(user_id, to_id, content, id_key) do
-      msg_json = msg |> ChatMessageJSON.showFlat()
-      chat_json = chat |> ChatJSON.showFlat()
-      {:reply, {:ok, %{msg: msg_json, chat: chat_json}}, socket}
-    else
+  @impl true
+  def handle_in("chat:create", %{"name" => name, "member_ids" => member_ids}, %{assigns: %{user_id: user_id}} = socket) do
+    case ChatService.create_group(name, user_id, member_ids) do
+      {:ok, chat} -> {:reply, {:ok, chat |> ChatJSON.show_flat()}, socket}
       {:error, _reason} -> {:reply, :error, socket}
     end
   end
 
-  def handle_in("mark_as_viewed", payload, %{assigns: %{user_id: user_id}} = socket) do
+  @impl true
+  def handle_in(
+        "chat:list",
+        %{"updated_after" => updated_after, "limit" => limit},
+        %{assigns: %{user_id: user_id}} = socket
+      ) do
+    chats = ChatService.chat_updates(user_id, updated_after, limit)
+
+    {:reply, {:ok, %{chats: chats} |> ChatJSON.index()}, socket}
+  end
+
+  @impl true
+  def handle_in("chat:list", _payload, %{assigns: %{user_id: user_id}} = socket) do
+    chats = ChatService.chat_list(user_id)
+
+    {:reply, {:ok, %{chats: chats} |> ChatJSON.index()}, socket}
+  end
+
+  @impl true
+  def handle_in(
+        "message:new",
+        %{"id_key" => id_key, "content" => content},
+        %{assigns: %{user_id: user_id, chat_id: chat_id}} = socket
+      ) do
+    case ChatMessageService.new_message(chat_id, content, user_id, id_key) do
+      {:ok, msg} -> {:reply, {:ok, msg |> ChatMessageJSON.show_flat()}, socket}
+      {:error, _reason} -> {:reply, :error, socket}
+    end
+  end
+
+  @impl true
+  def handle_in(
+        "message:new_dialog",
+        %{"id_key" => id_key, "content" => content, "recipient" => recipient},
+        %{assigns: %{user_id: user_id}} = socket
+      ) do
+    case ChatMessageService.new_dialog_message(user_id, recipient, content, id_key) do
+      {:ok, msg, chat} ->
+        {:reply, {:ok, %{msg: msg |> ChatMessageJSON.show_flat(), chat: chat |> ChatJSON.show_flat()}}, socket}
+
+      {:error, _reason} ->
+        {:reply, :error, socket}
+    end
+  end
+
+  @impl true
+  def handle_in(
+        "message:list",
+        %{"updated_after" => updated_after, "limit" => limit},
+        %{assigns: %{chat_id: chat_id}} = socket
+      ) do
+    messages = ChatMessageService.message_updates(chat_id, updated_after, limit)
+
+    {:reply, {:ok, %{chat_messages: messages} |> ChatMessageJSON.index()}, socket}
+  end
+
+  @impl true
+  def handle_in(
+        "message:history",
+        %{"created_before" => created_before, "limit" => limit},
+        %{assigns: %{chat_id: chat_id}} = socket
+      ) do
+    messages = ChatMessageService.message_history(chat_id, created_before, limit)
+
+    {:reply, {:ok, %{chat_messages: messages} |> ChatMessageJSON.index()}, socket}
+  end
+
+  @impl true
+  def handle_in(
+        "message:mark_as_viewed",
+        %{"message_ids" => message_ids} = payload,
+        %{assigns: %{user_id: user_id}} = socket
+      ) do
     viewed_at = DateTime.utc_now()
-    message_ids = payload["message_ids"]
 
     Chats.mark_messages_as_viewed(message_ids, viewed_at)
     broadcast_from(socket, "messages_viewed", %{payload | "user_id" => user_id, "viewed_at" => viewed_at})
@@ -143,31 +121,38 @@ defmodule WTChatWeb.ChatChannel do
     {:noreply, socket}
   end
 
-  def handle_in("typing", payload, %{assigns: %{user_id: user_id}} = socket) do
+  @impl true
+  def handle_in("user:typing", payload, %{assigns: %{user_id: user_id}} = socket) do
     broadcast_from(socket, "typing", %{payload | "user_id" => user_id})
 
     {:noreply, socket}
   end
 
-  def handle_in(event, _payload, socket) do
-    IO.puts(event)
+  @impl true
+  def handle_in(event, payload, socket) do
+    Logger.warning("Handle unexpected handle_in/3 event: #{event}. Payload: #{inspect(payload)}")
+
     {:noreply, socket}
   end
 
+  @impl true
   def handle_info({:chat_update, %Chat{} = chat}, socket) do
-    json = chat |> ChatJSON.showFlat()
-    push(socket, "chat_update", json)
+    push(socket, "chat_update", chat |> ChatJSON.show_flat())
+
     {:noreply, socket}
   end
 
+  @impl true
   def handle_info({:msg_update, %ChatMessage{} = message}, socket) do
-    json = message |> ChatMessageJSON.showFlat()
-    push(socket, "message_update", json)
+    push(socket, "message_update", message |> ChatMessageJSON.show_flat())
+
     {:noreply, socket}
   end
 
-  def handle_info(msg, socket) do
-    IO.inspect(msg)
+  @impl true
+  def handle_info(message, socket) do
+    Logger.warning("Handle unexpected handle_info/2 message: #{message}")
+
     {:noreply, socket}
   end
 end
