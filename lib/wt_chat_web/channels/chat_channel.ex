@@ -39,21 +39,6 @@ defmodule WTChatWeb.ChatChannel do
     {:ok, socket}
   end
 
-  # Fall back channel for chat-less dialog
-  # Uses only for wait on first message with newly created chat id for reconnect to the chatroom
-  def join("chat:dialog:" <> users, _params, socket) do
-    from_user = hd(String.split(users, ","))
-    to_user = hd(tl(String.split(users, ",")))
-    IO.puts("dialog join")
-    IO.puts("from_user: #{from_user}")
-    IO.puts("to_user: #{to_user}")
-
-    case ChatService.find_dialog(from_user, to_user) do
-      {:ok, chat} -> {:ok, %{"chat_id" => chat.id}, socket}
-      nil -> {:ok, socket}
-    end
-  end
-
   # User event for getting the actual chat list (desc order, no soft deleted)
   def handle_in("chat_list_get", _payload, socket) do
     user_id = socket.assigns.user_id
@@ -74,21 +59,6 @@ defmodule WTChatWeb.ChatChannel do
     json = %{chats: chats} |> ChatJSON.index()
     {:reply, {:ok, json}, socket}
   end
-
-  # User event for creating a new chat
-  def handle_in("chat_create_raw", payload, socket) do
-    chat = ChatService.create(payload)
-
-    case chat do
-      {:ok, chat} ->
-        json = chat |> ChatJSON.showFlat()
-        {:reply, {:ok, json}, socket}
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, socket}
-    end
-  end
-
 
   def handle_in("group_create", %{"members_ids" => members_ids, "name" => name}, socket) do
     user_id = socket.assigns.user_id

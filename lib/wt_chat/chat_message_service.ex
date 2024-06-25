@@ -100,11 +100,4 @@ defmodule WTChat.ChatMessageService do
   def publish_chat_message(%ChatMessage{} = msg) do
     Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:chatroom:#{msg.chat_id}", {:msg_update, msg})
   end
-
-  # Notifies opposite user that can also open new dialog about new message
-  # Also needs to notify sender if he opens new dialog on two devices
-  # def publish_dialog_message(%ChatMessage{} = msg, user1, user2) do
-  #   Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user1},#{user2}", {:msg_update, msg})
-  #   Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:dialog:#{user2},#{user1}", {:msg_update, msg})
-  # end
 end
