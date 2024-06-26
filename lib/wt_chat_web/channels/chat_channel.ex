@@ -99,9 +99,10 @@ defmodule WTChatWeb.ChatChannel do
   @impl true
   def handle_in(
         "message:history",
-        %{"created_before" => created_before, "limit" => limit},
+        %{"limit" => limit} = payload,
         %{assigns: %{chat_id: chat_id}} = socket
       ) do
+    created_before = Map.get(payload, "created_before")
     messages = ChatMessageService.message_history(chat_id, created_before, limit)
 
     {:reply, {:ok, %{chat_messages: messages} |> ChatMessageJSON.index()}, socket}
