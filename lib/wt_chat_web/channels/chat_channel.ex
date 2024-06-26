@@ -87,7 +87,7 @@ defmodule WTChatWeb.ChatChannel do
 
   @impl true
   def handle_in(
-        "message:list",
+        "message:updates",
         %{"updated_after" => updated_after, "limit" => limit},
         %{assigns: %{chat_id: chat_id}} = socket
       ) do
