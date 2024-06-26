@@ -98,6 +98,6 @@ defmodule WTChat.ChatMessageService do
   end
 
   def publish_chat_message(%ChatMessage{} = msg) do
-    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:chatroom:#{msg.chat_id}", {:msg_update, msg})
+    Phoenix.PubSub.broadcast(WTChat.PubSub, "chat:#{msg.chat_id}", {:msg_update, msg})
   end
 end
