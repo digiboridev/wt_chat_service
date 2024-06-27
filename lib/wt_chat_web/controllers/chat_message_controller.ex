@@ -29,7 +29,7 @@ defmodule WTChatWeb.ChatMessageController do
         "content" => content,
         "sender_id" => sender_id,
         "idempotency_key" => id_key
-      }) do
+  } = opts) do
     chat_id_number = String.to_integer(chat_id)
 
     with {:ok, %ChatMessage{} = chat_message} <-
@@ -37,7 +37,8 @@ defmodule WTChatWeb.ChatMessageController do
              chat_id_number,
              content,
              sender_id,
-             id_key
+             id_key,
+             opts
            ) do
       conn
       |> put_status(:created)

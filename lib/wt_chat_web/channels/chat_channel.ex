@@ -43,10 +43,10 @@ defmodule WTChatWeb.ChatChannel do
   @impl true
   def handle_in(
         "chat:create_dialog",
-        %{"id_key" => id_key, "first_message_content" => message_content, "recipient" => recipient},
+        %{"id_key" => id_key, "first_message_content" => message_content, "recipient" => recipient} = opts,
         %{assigns: %{user_id: user_id}} = socket
       ) do
-    case ChatMessageService.new_dialog_message(user_id, recipient, message_content, id_key) do
+    case ChatMessageService.new_dialog_message(user_id, recipient, message_content, id_key, opts) do
       {:ok, msg, chat} ->
         {:reply, {:ok, %{msg: msg |> ChatMessageJSON.show_flat(), chat: chat |> ChatJSON.show_flat()}}, socket}
 
@@ -76,10 +76,10 @@ defmodule WTChatWeb.ChatChannel do
   @impl true
   def handle_in(
         "message:new",
-        %{"id_key" => id_key, "content" => content},
+        %{"id_key" => id_key, "content" => content} = opts,
         %{assigns: %{user_id: user_id, chat_id: chat_id}} = socket
       ) do
-    case ChatMessageService.new_message(chat_id, content, user_id, id_key) do
+    case ChatMessageService.new_message(chat_id, content, user_id, id_key, opts) do
       {:ok, msg} -> {:reply, {:ok, msg |> ChatMessageJSON.show_flat()}, socket}
       {:error, _reason} -> {:reply, :error, socket}
     end

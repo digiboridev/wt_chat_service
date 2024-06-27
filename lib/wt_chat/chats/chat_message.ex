@@ -39,6 +39,13 @@ defmodule WTChat.Chats.ChatMessage do
     ])
     |> cast_assoc(:chat)
     |> validate_required([:sender_id, :content])
-    |> unique_constraint(:idempotency_key)
+    |> unique_constraint(:idempotency_key, message: "already_inserted")
+  end
+
+  def already_inserted?(%Ecto.Changeset{} = changeset) do
+    case changeset.errors[:idempotency_key] do
+      {"already_inserted", _} -> true
+      _ -> false
+    end
   end
 end
