@@ -28,8 +28,16 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  def join("chat:" <> chat_id, _, socket) do
-    {:ok, assign(socket, chat_id: chat_id)}
+  def join("chat:" <> chat_id, _, %{assigns: %{user_id: user_id}} = socket) do
+    with {:ok, chat} <- ChatService.get_by_id(chat_id) do
+      if chat.members |> Enum.find(&(&1.user_id == user_id)) == nil do
+        {:error, "You are not a member of the chat"}
+      else
+        {:ok, chat |> ChatJSON.show_flat(), assign(socket, chat_id: chat_id)}
+      end
+    else
+      _ -> {:error, %{reason: "Unknown chat"}}
+    end
   end
 
   ##
@@ -62,7 +70,7 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  @deprecated "No needed"
+  @deprecated "No needed anymore"
   def handle_in(
         "chat:list",
         %{"updated_after" => updated_after, "limit" => limit},
@@ -73,6 +81,7 @@ defmodule WTChatWeb.ChatChannel do
     {:reply, {:ok, %{chats: chats} |> ChatJSON.index()}, socket}
   end
 
+  @deprecated "No needed anymore"
   @impl true
   def handle_in("chat:list", _payload, %{assigns: %{user_id: user_id}} = socket) do
     chats = ChatService.chat_list(user_id)
@@ -81,6 +90,11 @@ defmodule WTChatWeb.ChatChannel do
   end
 
   @impl true
+  def handle_in("chat:user_chat_ids", _payload, %{assigns: %{user_id: user_id}} = socket) do
+    ids = ChatService.get_user_chat_ids(user_id)
+    {:reply, {:ok, ids}, socket}
+  end
+
   def handle_in(
         "chat:add_member",
         %{"member_id" => member_id},
@@ -206,9 +220,14 @@ defmodule WTChatWeb.ChatChannel do
   end
 
   @impl true
-  def handle_info({:chat_membership_update, %Chat{} = chat}, socket) do
-    push(socket, "chat_membership_update", chat |> ChatJSON.show_flat())
+  def handle_info({:chat_membership_join, chat_id}, socket) do
+    push(socket, "chat_membership_update", chat_id)
+    {:noreply, socket}
+  end
 
+  @impl true
+  def handle_info({:chat_membership_leave, chat_id}, socket) do
+    push(socket, "chat_membership_update", chat_id)
     {:noreply, socket}
   end
 
@@ -228,5 +247,4 @@ defmodule WTChatWeb.ChatChannel do
 
   ## Outgoing events end
   ##
-
 end

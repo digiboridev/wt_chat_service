@@ -28,7 +28,7 @@ defmodule WTChatWeb.ChatController do
   end
 
   def show(conn, %{"id" => chat_id}) do
-    with {:ok, chat} <- ChatService.show(chat_id) do
+    with {:ok, chat} <- ChatService.get_by_id(chat_id) do
       render(conn, :show, chat: chat)
     end
   end

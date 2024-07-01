@@ -54,6 +54,8 @@ defmodule WTChat.Chats do
     Repo.all(query) |> Repo.preload(:members)
   end
 
+
+
   @doc """
   Gets a single chat.
 
@@ -71,6 +73,19 @@ defmodule WTChat.Chats do
   def get_chat!(id), do: Repo.get!(Chat, id)
 
   def get_chat_with_members!(id), do: Repo.get!(Chat, id) |> Repo.preload(:members)
+
+
+  def get_user_chat_ids(user_id) do
+    query =
+      from c in Chat,
+        join: cm in ChatMember,
+        on: c.id == cm.chat_id,
+        where: cm.user_id == ^user_id and is_nil(c.deleted_at) and is_nil(cm.blocked_at) and is_nil(cm.left_at),
+        order_by: [desc: c.inserted_at],
+        select: c.id
+
+    Repo.all(query)
+  end
 
   def find_dialog(user1, user2) do
     query =
