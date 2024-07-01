@@ -39,8 +39,8 @@ defmodule WTChatWeb.ChatController do
     end
   end
 
-  def add_member(conn, %{"id" => chat_id, "member_id" => member_id}) do
-    with {:ok, chat} <- ChatService.add_member(chat_id, member_id) do
+  def add_member(conn, %{"id" => chat_id, "member_id" => member_id, "user_id" => user_id}) do
+    with {:ok, chat} <- ChatService.add_member(chat_id, member_id, user_id) do
       render(conn, :show, chat: chat)
     end
   end
@@ -51,8 +51,8 @@ defmodule WTChatWeb.ChatController do
     end
   end
 
-  def block_member(conn, %{"id" => chat_id, "member_id" => member_id}) do
-    with {:ok, chat} <- ChatService.block_member(chat_id, member_id) do
+  def block_member(conn, %{"id" => chat_id, "member_id" => member_id, "user_id" => user_id}) do
+    with {:ok, chat} <- ChatService.block_member(chat_id, member_id, user_id) do
       render(conn, :show, chat: chat)
     end
   end

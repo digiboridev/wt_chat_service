@@ -30,3 +30,6 @@ defmodule WTChat.Chats.Chat do
         |> optimistic_lock(:v))
   end
 end
+
+
+# TODO: Introduce group chat owner field and moderator role for members

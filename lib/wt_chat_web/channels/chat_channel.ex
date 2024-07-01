@@ -32,8 +32,15 @@ defmodule WTChatWeb.ChatChannel do
     {:ok, assign(socket, chat_id: chat_id)}
   end
 
+  ##
+  ## Chat related incoming events start
+
   @impl true
-  def handle_in("chat:create_group", %{"name" => name, "member_ids" => member_ids}, %{assigns: %{user_id: user_id}} = socket) do
+  def handle_in(
+        "chat:create_group",
+        %{"name" => name, "member_ids" => member_ids},
+        %{assigns: %{user_id: user_id}} = socket
+      ) do
     case ChatService.create_group(name, user_id, member_ids) do
       {:ok, chat} -> {:reply, {:ok, chat |> ChatJSON.show_flat()}, socket}
       {:error, _reason} -> {:reply, :error, socket}
@@ -55,7 +62,7 @@ defmodule WTChatWeb.ChatChannel do
     end
   end
 
-  @impl true
+  @deprecated "No needed"
   def handle_in(
         "chat:list",
         %{"updated_after" => updated_after, "limit" => limit},
@@ -72,6 +79,48 @@ defmodule WTChatWeb.ChatChannel do
 
     {:reply, {:ok, %{chats: chats} |> ChatJSON.index()}, socket}
   end
+
+  @impl true
+  def handle_in(
+        "chat:add_member",
+        %{"member_id" => member_id},
+        %{assigns: %{chat_id: chat_id, user_id: user_id}} = socket
+      ) do
+    case ChatService.add_member(chat_id, member_id, user_id) do
+      {:ok, chat} -> {:reply, {:ok, chat |> ChatJSON.show_flat()}, socket}
+      {:error, reason} -> {:reply, {:error, "#{reason}"}, socket}
+    end
+  end
+
+  @impl true
+  def handle_in(
+        "chat:leave",
+        %{},
+        %{assigns: %{chat_id: chat_id, user_id: user_id}} = socket
+      ) do
+    case ChatService.leave_chat(chat_id, user_id) do
+      {:ok, chat} -> {:reply, {:ok, chat |> ChatJSON.show_flat()}, socket}
+      {:error, reason} -> {:reply, {:error, "#{reason}"}, socket}
+    end
+  end
+
+  @impl true
+  def handle_in(
+        "chat:block_member",
+        %{"member_id" => member_id},
+        %{assigns: %{chat_id: chat_id, user_id: user_id}} = socket
+      ) do
+    case ChatService.block_member(chat_id, member_id, user_id) do
+      {:ok, chat} -> {:reply, {:ok, chat |> ChatJSON.show_flat()}, socket}
+      {:error, reason} -> {:reply, {:error, "#{reason}"}, socket}
+    end
+  end
+
+  ## Chat related incoming events end
+  ##
+
+  ##
+  # Message related incoming events start
 
   @impl true
   def handle_in(
@@ -136,9 +185,29 @@ defmodule WTChatWeb.ChatChannel do
     {:noreply, socket}
   end
 
-  @impl true
+  ## Message related incoming events end
+  ##
+
+  ##
+  ## Outgoing events start
+
+  @deprecated "No needed"
   def handle_info({:chat_update, %Chat{} = chat}, socket) do
     push(socket, "chat_update", chat |> ChatJSON.show_flat())
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:chat_info_update, %Chat{} = chat}, socket) do
+    push(socket, "chat_info_update", chat |> ChatJSON.show_flat())
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:chat_membership_update, %Chat{} = chat}, socket) do
+    push(socket, "chat_membership_update", chat |> ChatJSON.show_flat())
 
     {:noreply, socket}
   end
@@ -156,4 +225,8 @@ defmodule WTChatWeb.ChatChannel do
 
     {:noreply, socket}
   end
+
+  ## Outgoing events end
+  ##
+
 end

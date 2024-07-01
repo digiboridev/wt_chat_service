@@ -25,7 +25,7 @@ defmodule WTChat.Chats do
       from c in Chat,
         join: cm in ChatMember,
         on: c.id == cm.chat_id,
-        where: cm.user_id == ^member_id and is_nil(c.deleted_at),
+        where: cm.user_id == ^member_id and is_nil(c.deleted_at) and is_nil(cm.blocked_at) and is_nil(cm.left_at),
         order_by: [desc: c.inserted_at],
         select: c
 
@@ -366,6 +366,8 @@ defmodule WTChat.Chats do
   def get_message!(id), do: Repo.get!(ChatMessage, id)
 
   def get_chat_message!(id), do: Repo.get!(ChatMessage, id) |> Repo.preload([:chat])
+
+  def get_message_by_id_key!(id_key), do: Repo.get_by!(ChatMessage, idempotency_key: id_key)
 
   @doc """
   Creates a chat_message.
